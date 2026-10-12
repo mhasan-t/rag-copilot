@@ -32,11 +32,11 @@ An API-first copilot, with a minimal React UI, that answers operational question
 | Graph persistence    | `langgraph-checkpoint-postgres` on the same Postgres                                                                                                                                                                                                                                                                      | Runs survive restarts while awaiting approval                                     |
 | Vector store         | `pgvector` column on `document_chunk`, SQLAlchemy                                                                                                                                                                                                                                                                         | Single DB                                                                         |
 | ORM / migrations     | SQLAlchemy 2 (async) + asyncpg + Alembic                                                                                                                                                                                                                                                                                  | One migration per table                                                           |
-| Redis                | Execution lock (approved action runs once) + short-TTL cache for monitoring queries                                                                                                                                                                                                                                       | Nothing else needs it yet                                                         |
+| Redis                | Execution lock (approved action runs once). A monitoring-query cache was considered and deferred until a real need shows up | Nothing else needs it yet                                                         |
 | Monitoring stack     | Local **Grafana LGTM + Prometheus** via the single `grafana/otel-lgtm` image (Grafana, Loki, Tempo, Prometheus, OTel Collector)                                                                                                                                                                                           | User requirement; one container instead of five                                   |
 | Monitoring adapters  | Prometheus HTTP API (PromQL), Loki (LogQL), Tempo (TraceQL)                                                                                                                                                                                                                                                               | Real queries against the local stack                                              |
 | Something to monitor | A small **demo `payments` service** + load generator in compose, OTel-instrumented, with deployable "versions" (`v1` healthy, `v2` injects latency/errors)                                                                                                                                                                | Gives the copilot a real latency spike to diagnose and a real rollback to perform |
-| Deployment adapter   | `DEPLOYMENT_BACKEND=demo` (talks to demo service's admin API: current/previous version, rollback) or `kubernetes` (K8s API: rollout history, `rollout undo`, scale, restart)                                                                                                                                              | Local loop works without a cluster; real backend for K8s deployments              |
+| Deployment adapter   | `DEPLOYMENT_BACKEND=demo` (talks to demo service's admin API: current/previous version, rollback) or `kubernetes` (K8s API: rollout history, `rollout undo`, scale, restart; built in Phase 9, where a cluster exists to verify it)                                                                                                                                              | Local loop works without a cluster; real backend for K8s deployments              |
 | Own telemetry        | Copilot exports its own traces/metrics/logs to the same LGTM stack. Plus a persisted `run_step` audit trail in Postgres                                                                                                                                                                                                   | OTel for operators; DB trail is the record of who approved what                   |
 | Auth                 | `user` table; **superusers created via CLI** (`make createsuperuser`, argparse + getpass, argon2 hashing via `pwdlib`); **regular users created by superusers via API**; `POST /v1/auth/token` issues JWT (`pyjwt`); the `get_current_user` dependency sets `request.state.user`                                                                 | User requirement; no self-registration                                            |
 | Permissions          | Policy classes: `UserPolicy` (only superusers manage users), `ApprovalPolicy` (any active user approves `low` risk; only superusers approve `high`; nobody approves their own `high`-risk run unless they are the sole active superuser, who may do anything), `RunPolicy` (users see their own runs; superusers see all) | Separation of duties for risky actions                                            |
@@ -146,7 +146,7 @@ classify ──► (knowledge_question) ──► retrieve ──► answer ─�
 
 | Method | Path                               | Purpose                                              |
 | ------ | ---------------------------------- | ---------------------------------------------------- |
-| GET    | `/v1/health`                       | Liveness/readiness (DB, Redis; LGTM from Phase 3)    |
+| GET    | `/v1/health`                       | Liveness/readiness (DB, Redis). Monitoring is deliberately not a readiness check: an LGTM outage shouldn't take login and approvals down; it surfaces as 502 on monitoring queries |
 | POST   | `/v1/auth/token`                   | Email/password → JWT                                 |
 | GET    | `/v1/auth/me`                      | Current user                                         |
 | POST   | `/v1/users`                        | Create regular user (superuser only)                 |
@@ -233,7 +233,8 @@ Each phase ends runnable, with tests, lint and docs updated.
 **Phase 3 — Demo service + monitoring + incidents**
 
 - `demo_payments` service (OTel-instrumented, versions v1/v2, admin API) + loadgen in compose; Grafana dashboard for it.
-- Prometheus/Loki/Tempo adapters with query templates; deployments adapters (`demo`, `kubernetes`); `incident` table + seed; Redis cache.
+- Prometheus/Loki/Tempo adapters with query templates in `config/app.yaml`; `demo` deployments adapter (read-only; rollback/scale/restart come with Phase 5); `incident` table + `make seed` + `GET /v1/incidents`.
+- Tests run against the live stack: deploying `v2` must show up in deployment state, p99 latency, error ratio, error logs and slow traces.
 
 **Phase 4 — Copilot graph (read-only)**
 
@@ -264,10 +265,11 @@ Each phase ends runnable, with tests, lint and docs updated.
 **Phase 9 — Kubernetes**
 
 - Manifests for api, web, migrate Job, ConfigMap, Secret template; RBAC limited to the deployments/namespace the copilot may roll back/scale/restart.
+- `kubernetes` deployment adapter (`DEPLOYMENT_BACKEND=kubernetes`), verified against a local kind cluster.
 
 **Later**
 
-- SSE streaming of run progress, hybrid (BM25 + vector) retrieval if evals show misses, external incident source, local kind cluster to exercise the `kubernetes` deployment adapter end to end.
+- SSE streaming of run progress, hybrid (BM25 + vector) retrieval if evals show misses, external incident source.
 
 ## 10. Risks
 

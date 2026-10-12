@@ -4,3 +4,20 @@ service:
 
 auth:
   access_token_ttl_minutes: 60
+
+# Query templates for the monitoring tools. Placeholders ($service, $rate_window, $min_duration_ms) are filled in
+# only after validation, so callers (including the LLM) can never inject free-form queries.
+monitoring:
+  metrics:
+    latency_p99_seconds: >-
+      histogram_quantile(0.99, sum by (le) (
+      rate(http_server_request_duration_seconds_bucket{service_name="$service"}[$rate_window])))
+    # `or vector(0)`: with no 5xx series the numerator would be empty and the ratio would vanish instead of being 0.
+    error_ratio: >-
+      (sum(rate(http_server_request_duration_seconds_count{service_name="$service",http_response_status_code=~"5.."}[$rate_window]))
+      or vector(0))
+      / sum(rate(http_server_request_duration_seconds_count{service_name="$service"}[$rate_window]))
+    request_rate: >-
+      sum(rate(http_server_request_duration_seconds_count{service_name="$service"}[$rate_window]))
+  error_logs: '{service_name="$service"} | severity_text=~"ERROR|CRITICAL|FATAL"'
+  slow_traces: '{ resource.service.name = "$service" && kind = server && duration > ${min_duration_ms}ms }'

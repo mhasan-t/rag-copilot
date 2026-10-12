@@ -1,0 +1,7 @@
+# Mounted into the otel-lgtm image's Grafana provisioning directory (see docker-compose.dev.yaml).
+apiVersion: 1
+providers:
+  - name: rag-copilot
+    type: file
+    options:
+      path: /otel-lgtm/rag-copilot-dashboards

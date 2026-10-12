@@ -7,10 +7,15 @@ x-api: &api
     args:
       UV_SYNC_FLAGS: "" # include dev tools (pytest, ruff) in the dev image
   env_file: api/.env
-  # Connection URLs are built here from the root .env so credentials are defined once.
+  # Addresses of the other dev containers; credentials come from the root .env so they are defined once.
   environment:
     DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     REDIS_URL: redis://redis:6379/0
+    PROMETHEUS_URL: http://lgtm:9090
+    LOKI_URL: http://lgtm:3100
+    TEMPO_URL: http://lgtm:3200
+    DEPLOYMENT_BACKEND: demo
+    DEMO_PAYMENTS_ADMIN_URL: http://payments:8000
   # Lets the containers reach model servers running on the host (e.g. Ollama).
   extra_hosts:
     - host.docker.internal:host-gateway
@@ -45,6 +50,39 @@ services:
     image: grafana/otel-lgtm:0.36.0
     ports:
       - "3000:3000"
+    volumes:
+      - ./config/grafana/dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/rag-copilot.yaml:ro
+      - ./config/grafana/dashboards:/otel-lgtm/rag-copilot-dashboards:ro
+      # Metrics, logs and traces survive container restarts.
+      - lgtm-data:/data
+
+  # Dev-only demo service the copilot monitors and remediates; see demo_payments/app.py.
+  payments:
+    build: ./demo_payments
+    environment:
+      OTEL_SERVICE_NAME: payments
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://lgtm:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "true"
+      # Stable HTTP semantic conventions: http.server.request.duration in seconds.
+      OTEL_SEMCONV_STABILITY_OPT_IN: http
+      OTEL_PYTHON_FASTAPI_EXCLUDED_URLS: healthz,admin
+      # Export every 5s (default 60s) so a deploy shows up in metrics quickly.
+      OTEL_METRIC_EXPORT_INTERVAL: "5000"
+    ports:
+      - "8001:8000"
+    depends_on:
+      - lgtm
+
+  loadgen:
+    build: ./demo_payments
+    command: ["python", "loadgen.py"]
+    environment:
+      LOADGEN_TARGET_URL: http://payments:8000
+      LOADGEN_REQUESTS_PER_SECOND: "5"
+    depends_on:
+      - payments
 
   migrate:
     <<: *api
@@ -66,3 +104,4 @@ services:
 
 volumes:
   postgres-data:
+  lgtm-data:

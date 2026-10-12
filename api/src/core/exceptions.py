@@ -36,6 +36,20 @@ class ConflictError(AppError):
     code = "conflict"
 
 
+class InvalidInputError(AppError):
+    """Input rejected by business rules (as opposed to request-schema validation)."""
+
+    status_code = 422
+    code = "invalid_input"
+
+
+class UpstreamError(AppError):
+    """A backing service we depend on (monitoring stack, deployment backend) failed or rejected our request."""
+
+    status_code = 502
+    code = "upstream_error"
+
+
 class ServiceUnavailableError(AppError):
     status_code = 503
     code = "service_unavailable"

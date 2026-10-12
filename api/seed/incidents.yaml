@@ -1,0 +1,37 @@
+# Example incident history for local development. Times are relative to when `make seed` runs,
+# so the incidents always count as "recent".
+- service: payments
+  severity: sev2
+  title: Payments latency spike after release
+  summary: >-
+    p99 latency on POST /payments rose from ~100 ms to over 2 s and 5xx errors reached 6% minutes after a release.
+    Error logs showed "ledger-db query timed out: connection pool exhausted". The release added a ledger query
+    per payment that held DB connections too long. Resolved by rolling back to the previous version.
+  status: resolved
+  started_hours_ago: 240
+  duration_minutes: 35
+- service: payments
+  severity: sev3
+  title: Card network declines elevated
+  summary: >-
+    An upstream card network had a partial outage; "issuer unavailable" declines rose to 3% for 20 minutes.
+    Latency was normal. No action on our side; resolved when the provider recovered.
+  status: resolved
+  started_hours_ago: 72
+  duration_minutes: 20
+- service: checkout
+  severity: sev3
+  title: Checkout page slow for EU users
+  summary: >-
+    CDN misconfiguration routed EU traffic to a US origin, adding ~300 ms. Fixed by correcting the CDN origin rules.
+  status: resolved
+  started_hours_ago: 120
+  duration_minutes: 90
+- service: auth
+  severity: sev4
+  title: Token refresh errors after certificate rotation
+  summary: >-
+    A small share of token refreshes failed for 10 minutes while a rotated signing certificate propagated.
+  status: resolved
+  started_hours_ago: 600
+  duration_minutes: 10

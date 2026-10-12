@@ -13,13 +13,14 @@
 make up        # first run copies the .env examples, builds, migrates, starts everything
 make logs api  # follow logs of one service
 make down      # stop
-make clean     # stop and delete the database volume
+make clean     # stop and delete the database and telemetry volumes
 ```
 
 | Service | URL |
 |---|---|
 | API (OpenAPI docs at `/docs`) | http://localhost:8000 |
-| Grafana (Loki, Tempo, Prometheus datasources preconfigured) | http://localhost:3000 |
+| Grafana (Loki, Tempo, Prometheus datasources preconfigured; **Demo payments service** dashboard) | http://localhost:3000 |
+| Demo payments service (admin API under `/admin/deployments/payments`) | http://localhost:8001 |
 
 The `api` container bind-mounts `api/` and reloads on change. Its virtualenv lives in `/opt/venv` inside the image, so it isn't hidden by the mount; rebuild (`make up`) after changing dependencies.
 
@@ -27,7 +28,9 @@ The `api` container bind-mounts `api/` and reloads on change. Its virtualenv liv
 
 | Command | What it does |
 |---|---|
-| `make test` | Run pytest inside the api container. Tests use real Postgres and Redis, but a separate `<db>_test` database that is recreated from the migrations on every run, so dev data is never touched |
+| `make test` | Run pytest inside the api container. Tests use real Postgres and Redis, but a separate `<db>_test` database that is recreated from the migrations on every run, so dev data is never touched. Monitoring tests query the live stack and briefly deploy the demo service's `v2`, so the whole stack must be up; they take ~40 s |
+| `make seed` | Load example data (incidents); does nothing if the table already has rows |
+| `make demo-deploy v2` / `make demo-rollback` | Release the demo service's faulty `v2` / roll back to the previous version |
 | `make createsuperuser admin@example.com` | Create a superuser (prompts for the password) |
 | `make lint` / `make format` | Ruff check + format check / auto-fix + format, on the host |
 | `make revision m="add user table"` | Autogenerate an Alembic migration |
@@ -42,9 +45,9 @@ Add dependencies with `cd api && uv add <package>` (`--dev` for tooling).
 Two kinds of configuration:
 
 - **Environment variables** — anything that differs per deployment: connection URLs, model provider/model, secrets. Read and validated by `Settings` in the API's core config. Examples: `api/.env.local.example` (works as-is for local dev) and `api/.env.production.example`.
-- **`api/config/app.yaml`** — anything that is the same everywhere: service name, title, and later the action/risk catalog and query templates. The version comes from `api/pyproject.toml`.
+- **`api/config/app.yaml`** — anything that is the same everywhere: service name, title, token lifetime, the monitoring query templates, and later the action/risk catalog. The version comes from `api/pyproject.toml`.
 
-In dev, `DATABASE_URL` and `REDIS_URL` are built by Compose from the Postgres credentials in the root `.env`, so credentials live in one place.
+In dev, every URL that points at another container (`DATABASE_URL`, `REDIS_URL`, `PROMETHEUS_URL`, `LOKI_URL`, `TEMPO_URL`, `DEMO_PAYMENTS_ADMIN_URL`) is set by Compose, using the Postgres credentials in the root `.env`, so `api/.env` only holds your own choices (model provider, secrets).
 
 ### Choosing a model provider
 
@@ -60,6 +63,23 @@ The chat model and embeddings are created through LangChain's `init_chat_model` 
 Bundled integrations: `openai` (also any OpenAI-compatible server such as vLLM or LM Studio), `anthropic`, `ollama`. Others: `uv add langchain-<provider>`.
 
 Embeddings are configured the same way with the `EMBEDDING_*` variables. `EMBEDDING_DIMENSIONS` must match the embedding model's output size; changing the embedding model later requires a migration and re-indexing.
+
+## Demo service and monitoring
+
+The copilot needs something to monitor, so the dev stack includes a stand-in `payments` service (`demo_payments/`) and a load generator sending it 5 requests per second. The service is instrumented with OpenTelemetry auto-instrumentation and sends metrics, logs and traces to the `lgtm` container (Grafana, Prometheus, Loki, Tempo).
+
+It has two versions:
+
+| Version | Behaviour |
+|---|---|
+| `v1` (default) | p99 latency ~0.1 s, ~0.5% errors ("card network declined request") |
+| `v2` | Bad release: latency 0.6–1.8 s, ~8% errors, logs "ledger-db query timed out: connection pool exhausted" |
+
+`make demo-deploy v2` creates the incident the copilot is built to diagnose; `make demo-rollback` fixes it. Restarting the container resets it to `v1`.
+
+The API reads this data through fixed query templates in `api/config/app.yaml` (p99 latency, error ratio, request rate, error logs, slow traces). Service names are validated before being substituted, so a caller, including the LLM later, can't inject its own query. Deployment state comes from the backend selected by `DEPLOYMENT_BACKEND`; only `demo` exists so far.
+
+Recent incidents are stored in Postgres and served by `GET /v1/incidents?service=&since=&limit=` (default: last 30 days). `make seed` loads example incidents, including a past payments latency spike that was fixed by a rollback.
 
 ## Users and authentication
 
