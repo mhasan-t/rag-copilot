@@ -1,0 +1,68 @@
+name: rag-copilot
+
+# Shared by the api and its one-shot migration job.
+x-api: &api
+  build:
+    context: ./api
+    args:
+      UV_SYNC_FLAGS: "" # include dev tools (pytest, ruff) in the dev image
+  env_file: api/.env
+  # Connection URLs are built here from the root .env so credentials are defined once.
+  environment:
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    REDIS_URL: redis://redis:6379/0
+  # Lets the containers reach model servers running on the host (e.g. Ollama).
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  volumes:
+    - ./api:/app
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.7-pg18-trixie
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:8.10-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # Grafana + Loki + Tempo + Prometheus + OTel Collector: the monitored stack and the copilot's own telemetry.
+  lgtm:
+    image: grafana/otel-lgtm:0.36.0
+    ports:
+      - "3000:3000"
+
+  migrate:
+    <<: *api
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *api
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

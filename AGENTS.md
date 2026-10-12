@@ -158,8 +158,7 @@ Do not invent or apply rules from technologies that are not used by the project.
 
 - **Table names:** snake_case
 - **Column names:** snake_case
-- **Code representation:** camelCase
-- **Example:** ORM class: AnalyticsInstallation. Application attribute: createdAt. Database table: analytics_installation. Database column: created_at.
+- **Code representation:** snake_case
 
 #### Migrations
 

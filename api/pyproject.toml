@@ -1,0 +1,43 @@
+[project]
+name = "rag-copilot-api"
+version = "0.1.0"
+description = "Enterprise AI Operations Copilot API"
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.20.0",
+    "asyncpg>=0.32.0",
+    "fastapi>=0.143.0",
+    "langchain>=1.4.4",
+    "langchain-anthropic>=1.7.5",
+    "langchain-ollama>=1.1.0",
+    "langchain-openai>=1.7.0",
+    "pydantic-settings>=2.15.0",
+    "pyyaml>=6.0.3",
+    "redis[hiredis]>=8.1.0",
+    "sqlalchemy[asyncio]>=2.1.4",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.17.0",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "SIM"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+# One event loop for the whole session: the app's engine and Redis client are module-level and loop-bound.
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+# The container user cannot write to the bind-mounted source tree.
+addopts = "-p no:cacheprovider"

@@ -1,0 +1,3 @@
+service:
+  name: rag-copilot-api
+  title: Enterprise AI Operations Copilot

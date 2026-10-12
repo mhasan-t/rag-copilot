@@ -52,7 +52,7 @@ Monorepo so the React app slots in later without moving the backend. Backend is 
 rag-copilot/
 ├── Makefile
 ├── docker-compose.dev.yaml         # api, migrate, postgres(pgvector), redis, lgtm, demo-payments, loadgen, (web)
-├── .env.local.example / .env.production.example   # compose-level vars
+├── .env.local.example                            # dev compose vars (Postgres credentials)
 ├── config/
 │   └── grafana/                    # provisioned dashboards
 ├── deploy/k8s/                     # api Deployment/Service, migrate Job, ConfigMap, Secret template, RBAC
@@ -74,7 +74,7 @@ rag-copilot/
 │   │   │   ├── llm.py              # chat model + embeddings factory from env
 │   │   │   ├── exceptions.py       # AppError hierarchy
 │   │   │   ├── exception_handlers.py  # global: log + uniform JSON response
-│   │   │   └── dependencies/       # get_session, get_current_user, …
+│   │   │   └── dependencies.py     # get_session, get_redis, get_current_user, …
 │   │   └── modules/
 │   │       ├── auth/               # user model, token endpoint, CLI, policies
 │   │       ├── knowledge/          # documents, chunking, embedding, retrieval
@@ -146,7 +146,7 @@ classify ──► (knowledge_question) ──► retrieve ──► answer ─�
 
 | Method | Path                               | Purpose                                              |
 | ------ | ---------------------------------- | ---------------------------------------------------- |
-| GET    | `/v1/health`                       | Liveness/readiness (DB, Redis, LGTM)                 |
+| GET    | `/v1/health`                       | Liveness/readiness (DB, Redis; LGTM from Phase 3)    |
 | POST   | `/v1/auth/token`                   | Email/password → JWT                                 |
 | GET    | `/v1/auth/me`                      | Current user                                         |
 | POST   | `/v1/users`                        | Create regular user (superuser only)                 |
@@ -184,6 +184,7 @@ LLM_BASE_URL=                # optional, for OpenAI-compatible / self-hosted ser
 EMBEDDING_PROVIDER=
 EMBEDDING_MODEL=
 EMBEDDING_DIMENSIONS=
+EMBEDDING_BASE_URL=          # optional, for self-hosted servers
 
 # Monitoring stack (local LGTM)
 PROMETHEUS_URL=
@@ -271,6 +272,6 @@ Each phase ends runnable, with tests, lint and docs updated.
 ## 10. Risks
 
 - **Model-agnostic quality variance** — smaller/local models may fail at structured output or reasoning; startup capability check + evals per model make this visible.
-- **Python 3.14 wheels** — verified in Phase 0 before any code.
+- **Python 3.14 wheels** — verified in Phase 0: every planned dependency installs from wheels on 3.14.
 - **Prompt injection via logs/docs** — retrieved content is treated as data; actions only via typed tools, server-side risk enforcement and superuser approval.
 - **Over-privileged executor** — K8s RBAC scoped per namespace; executor credentials separate from read-only monitoring access.
