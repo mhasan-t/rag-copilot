@@ -21,3 +21,10 @@ monitoring:
       sum(rate(http_server_request_duration_seconds_count{service_name="$service"}[$rate_window]))
   error_logs: '{service_name="$service"} | severity_text=~"ERROR|CRITICAL|FATAL"'
   slow_traces: '{ resource.service.name = "$service" && kind = server && duration > ${min_duration_ms}ms }'
+
+knowledge:
+  # Chunks returned per search when the caller doesn't say.
+  top_k: 5
+  # Sections longer than this are split further; ~1500 chars keeps one procedure step per chunk.
+  chunk_max_chars: 1500
+  chunk_overlap_chars: 150

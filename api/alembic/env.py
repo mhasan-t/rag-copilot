@@ -12,6 +12,7 @@ from src.core.database import Base
 # Every module's models must be imported so autogenerate sees their tables.
 import src.modules.auth.models  # noqa: E402, F401  isort: skip
 import src.modules.incidents.models  # noqa: E402, F401  isort: skip
+import src.modules.knowledge.models  # noqa: E402, F401  isort: skip
 
 config = context.config
 if config.config_file_name is not None:

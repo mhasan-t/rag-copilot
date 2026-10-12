@@ -29,7 +29,7 @@ The `api` container bind-mounts `api/` and reloads on change. Its virtualenv liv
 | Command | What it does |
 |---|---|
 | `make test` | Run pytest inside the api container. Tests use real Postgres and Redis, but a separate `<db>_test` database that is recreated from the migrations on every run, so dev data is never touched. Monitoring tests query the live stack and briefly deploy the demo service's `v2`, so the whole stack must be up; they take ~40 s |
-| `make seed` | Load example data (incidents); does nothing if the table already has rows |
+| `make seed` | Load example incidents (skipped if the table has rows) and ingest `api/seed/documents/*.md` (unchanged files are skipped). Ingesting needs the embedding provider to be running |
 | `make demo-deploy v2` / `make demo-rollback` | Release the demo service's faulty `v2` / roll back to the previous version |
 | `make createsuperuser admin@example.com` | Create a superuser (prompts for the password) |
 | `make lint` / `make format` | Ruff check + format check / auto-fix + format, on the host |
@@ -80,6 +80,18 @@ It has two versions:
 The API reads this data through fixed query templates in `api/config/app.yaml` (p99 latency, error ratio, request rate, error logs, slow traces). Service names are validated before being substituted, so a caller, including the LLM later, can't inject its own query. Deployment state comes from the backend selected by `DEPLOYMENT_BACKEND`; only `demo` exists so far.
 
 Recent incidents are stored in Postgres and served by `GET /v1/incidents?service=&since=&limit=` (default: last 30 days). `make seed` loads example incidents, including a past payments latency spike that was fixed by a rollback.
+
+## Knowledge base (runbooks)
+
+Runbooks, postmortems and wiki pages are stored as Markdown, split into chunks and embedded into pgvector for search.
+
+- **Adding documents:** `POST /v1/knowledge/documents` (superusers only) with `title`, `source_uri`, `doc_type` (`runbook`, `postmortem`, `wiki`), `service_tags` and Markdown `content`. `source_uri` identifies the document: posting the same URI again replaces it, or does nothing if nothing changed. Seed documents in `api/seed/documents/` use YAML front matter for the metadata and get `seed://<filename>` URIs.
+- **Tagging:** `service_tags` lists the services a document applies to. A document with no tags applies to every service (e.g. the general rollback runbook).
+- **Searching:** `GET /v1/knowledge/search?q=&service=&limit=` (any signed-in user) returns the most similar chunks with a cosine-similarity `score`. With `service`, only that service's documents and untagged ones are searched.
+- **Chunking:** documents are split by heading, and long sections further (`knowledge.chunk_max_chars` in `api/config/app.yaml`). Each chunk starts with its heading path, e.g. `Payments latency spike > Diagnose > 2. Check recent deployments`, so it makes sense on its own.
+- **Changing the embedding model:** vectors from different models can't be compared, so the API refuses to start if the configured embedding provider/model or `EMBEDDING_DIMENSIONS` doesn't match the stored vectors. To switch models: write a migration that resizes `document_chunk.embedding` if the dimension changes, empty the `document` table, and re-run `make seed` (plus re-post any documents you added through the API).
+
+Tests use a fake embedder, so `make test` doesn't need a model server; `make seed` and real searches do.
 
 ## Users and authentication
 

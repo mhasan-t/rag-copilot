@@ -79,12 +79,19 @@ class MonitoringConfig(BaseModel):
         return self
 
 
+class KnowledgeConfig(BaseModel):
+    top_k: int
+    chunk_max_chars: int
+    chunk_overlap_chars: int
+
+
 class AppConfig(BaseModel):
     """Deployment-independent configuration from config/app.yaml."""
 
     service: ServiceConfig
     auth: AuthConfig
     monitoring: MonitoringConfig
+    knowledge: KnowledgeConfig
     version: str
 
 

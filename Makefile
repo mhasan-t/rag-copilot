@@ -49,9 +49,10 @@ format:
 createsuperuser:
 	$(DEV_COMPOSE) exec api python -m src.modules.auth.cli $(ARGS)
 
-# Load example data (currently incidents); safe to re-run.
+# Load example incidents and documents (documents need the embedding provider); safe to re-run.
 seed:
 	$(DEV_COMPOSE) exec api python -m src.modules.incidents.seed
+	$(DEV_COMPOSE) exec api python -m src.modules.knowledge.seed
 
 # Usage: make demo-deploy v2 (v2 causes a latency spike and errors; see demo_payments/app.py).
 demo-deploy:
