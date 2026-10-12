@@ -13,6 +13,7 @@ from src.core.database import Base
 import src.modules.auth.models  # noqa: E402, F401  isort: skip
 import src.modules.incidents.models  # noqa: E402, F401  isort: skip
 import src.modules.knowledge.models  # noqa: E402, F401  isort: skip
+import src.modules.copilot.models  # noqa: E402, F401  isort: skip
 
 config = context.config
 if config.config_file_name is not None:

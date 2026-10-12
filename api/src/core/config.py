@@ -85,6 +85,10 @@ class KnowledgeConfig(BaseModel):
     chunk_overlap_chars: int
 
 
+class CopilotConfig(BaseModel):
+    llm_timeout_seconds: float
+
+
 class AppConfig(BaseModel):
     """Deployment-independent configuration from config/app.yaml."""
 
@@ -92,6 +96,7 @@ class AppConfig(BaseModel):
     auth: AuthConfig
     monitoring: MonitoringConfig
     knowledge: KnowledgeConfig
+    copilot: CopilotConfig
     version: str
 
 

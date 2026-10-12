@@ -28,3 +28,7 @@ knowledge:
   # Sections longer than this are split further; ~1500 chars keeps one procedure step per chunk.
   chunk_max_chars: 1500
   chunk_overlap_chars: 150
+
+copilot:
+  # Upper bound for one LLM call; local models on CPU can be slow.
+  llm_timeout_seconds: 120

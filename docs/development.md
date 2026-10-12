@@ -93,6 +93,24 @@ Runbooks, postmortems and wiki pages are stored as Markdown, split into chunks a
 
 Tests use a fake embedder, so `make test` doesn't need a model server; `make seed` and real searches do.
 
+## Asking the copilot
+
+`POST /v1/copilot/runs` with `{"question": "..."}` runs the copilot and returns the run when it's done (this can take as long as the LLM needs; there's no streaming yet).
+
+1. **classify** decides whether the question is an investigation of a service, a how-to question for the runbooks, or out of scope, and which service and time window it's about.
+2. For an investigation, **retrieve_runbooks** and **gather_evidence** run in parallel. Evidence comes from Prometheus (p99 latency, error ratio, request rate), Loki (error logs), Tempo (slow traces), the deployment backend and the incident history. A source that fails is passed on as "unavailable" rather than failing the run.
+3. **diagnose** asks the LLM for an answer, the likely cause, its confidence, supporting evidence and recommended actions. It only recommends; nothing is executed in this phase.
+
+How-to questions go to **retrieve_documents** → **answer_knowledge** instead.
+
+Everything is recorded: `GET /v1/copilot/runs/{id}/steps` lists each node, each query with its arguments and results, and each LLM call with the exact messages sent and what came back. `GET /v1/copilot/runs` lists runs, newest first. Users see their own runs; superusers see everyone's.
+
+If the LLM can't be reached, the request fails with 502 and `details.run_id`; the run is kept with status `failed`.
+
+The chat model comes from the `LLM_*` settings (see [Choosing a model provider](#choosing-a-model-provider)); it must support tool calling, which the API checks at startup. `LLM_CLASSIFIER_MODEL` can name a smaller model for the classify step. `copilot.llm_timeout_seconds` in `api/config/app.yaml` caps each LLM call.
+
+Tests use a scripted chat model, so they check routing, evidence and prompts but not how well a real model reasons. Try a real model by starting it (e.g. `ollama pull qwen3:8b`), running `make seed`, `make demo-deploy v2`, waiting a minute, and asking "Why is the payments service showing a latency spike?".
+
 ## Users and authentication
 
 - There is no sign-up. Create the first superuser with `make createsuperuser <email>`; superusers then create regular users through `POST /v1/users`. Superusers can only be created through the CLI.

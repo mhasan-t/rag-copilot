@@ -29,7 +29,7 @@ An API-first copilot, with a minimal React UI, that answers operational question
 | Embeddings           | Same approach via `init_embeddings` (`EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`)                                                                                                                                                                                                                                             | Same reason                                                                       |
 | Provider requirement | Chat model must support tool calling / structured output (used for classification and tool selection). Checked at startup                                                                                                                                                                                                 | Fail fast instead of mid-run                                                      |
 | Orchestration        | LangGraph `StateGraph` with `interrupt()` for approvals                                                                                                                                                                                                                                                                   | Built-in human-in-the-loop with resumable state                                   |
-| Graph persistence    | `langgraph-checkpoint-postgres` on the same Postgres                                                                                                                                                                                                                                                                      | Runs survive restarts while awaiting approval                                     |
+| Graph persistence    | `langgraph-checkpoint-postgres` on the same Postgres; added in Phase 5, the first phase that pauses a run                                                                                                                                                                                                                                                                      | Runs survive restarts while awaiting approval                                     |
 | Vector store         | `pgvector` column on `document_chunk`, SQLAlchemy                                                                                                                                                                                                                                                                         | Single DB                                                                         |
 | ORM / migrations     | SQLAlchemy 2 (async) + asyncpg + Alembic                                                                                                                                                                                                                                                                                  | One migration per table                                                           |
 | Redis                | Execution lock (approved action runs once). A monitoring-query cache was considered and deferred until a real need shows up | Nothing else needs it yet                                                         |
@@ -81,9 +81,8 @@ rag-copilot/
 │   │       ├── monitoring/         # Prometheus / Loki / Tempo adapters
 │   │       ├── deployments/        # demo + kubernetes adapters
 │   │       ├── incidents/
-│   │       ├── copilot/            # LangGraph graph, classifier, runs API
+│   │       ├── copilot/            # LangGraph graph, classifier, runs API, run_step audit trail
 │   │       ├── remediation/        # action catalog, proposals, approvals, execution, verification
-│   │       └── audit/              # run_step persistence
 │   └── tests/
 ├── demo_payments/                  # tiny FastAPI service + loadgen script (dev only)
 └── web/                            # React app (Phase 8)
@@ -101,7 +100,7 @@ Each module uses only the files it needs from:
 | `document_chunk`       | id, document_id, chunk_index, content, embedding vector(N), embedding_model                                             | HNSW index; N = `EMBEDDING_DIMENSIONS` when the migration ran. Service filter joins `document` (no copied tags) |
 | `incident`             | id, service, severity, title, summary, status, started_at, resolved_at                                                  | Seeded in dev                                                                                      |
 | `copilot_run`          | id, user_id, question, classification, status (running/awaiting_approval/completed/failed/rejected), answer, created_at | One per question                                                                                   |
-| `run_step`             | id, run_id, node, tool_name, input_json, output_json, duration_ms, trace_id, created_at                                 | Audit trail; secrets redacted                                                                      |
+| `run_step`             | id, run_id, node, tool_name, input, output, error, duration_ms, created_at (trace_id in Phase 6)                                 | Audit trail; secrets redacted                                                                      |
 | `remediation_proposal` | id, run_id, action_type, params_json, risk_level, rationale, status                                                     | proposed/approved/rejected/executed/failed/verified                                                |
 | `approval`             | id, proposal_id, approver_id, decision, comment, decided_at                                                             |                                                                                                    |
 | `action_execution`     | id, proposal_id, started_at, finished_at, result_json, verification_json                                                |                                                                                                    |
@@ -113,16 +112,14 @@ UUIDs generated by Postgres (`gen_random_uuid()`). LangGraph checkpoint tables a
 ## 6. Agent graph
 
 ```
-classify ──► (knowledge_question) ──► retrieve ──► answer ──► END
-   │
-   └──► (diagnosis / status / remediation_request)
-         retrieve_runbooks
-           ▼
-         gather_evidence   (Prometheus, Loki, Tempo, deployments, incidents — in parallel)
-           ▼
-         summarize_evidence
-           ▼
-         hypothesize_cause
+classify ──► knowledge ──► retrieve_documents ──► answer_knowledge ──► END
+   ├──► out_of_scope ──► decline ──► END
+   ├──► investigate, no usable service ──► ask_for_service ──► END
+   └──► investigate (why slow? is X healthy? should we roll back?)
+         retrieve_runbooks ─┐  (in parallel)
+         gather_evidence ───┤  (Prometheus, Loki, Tempo, deployments, incidents; each source in parallel)
+                            ▼
+         diagnose   (one structured LLM call: answer, likely cause, confidence, evidence, recommended actions)
            ▼
          propose_remediation ──► (no action / read-only) ──► END
            ▼ (low or high risk)
@@ -135,8 +132,10 @@ classify ──► (knowledge_question) ──► retrieve ──► answer ─�
          END
 ```
 
-- Classification is structured output (`category`, `service`, `time_window`); `out_of_scope` short-circuits.
-- One decorator wraps every node: writes a `run_step` row and opens an OTel span.
+- Classification is structured output (`category`, `service`, `window_minutes`). The classifier's output is treated as untrusted: invalid service names are dropped and the window is clamped.
+- Summarising evidence and hypothesising a cause are one `diagnose` call: evidence is summarised deterministically in code first (downsampled series, grouped logs), so a separate LLM summarisation step adds latency without adding information.
+- An evidence source that fails (backend down, unknown service) is reported to the LLM as unavailable instead of failing the run.
+- One wrapper records every node as a `run_step` row; every tool query and LLM call (with its exact messages) gets its own row. OTel spans come in Phase 6.
 - Tools are typed (Pydantic input/output) and declared in `config/app.yaml` with `risk_level` (`read`, `low`, `high`). Executing `high` without an approved `approval` raises `ForbiddenError` in `RemediationService`. The graph is not the only gate.
 - PromQL/LogQL are built from templates per tool (e.g. `latency_p99(service, window)`), not free-form LLM queries. That keeps queries valid and bounded.
 - MVP actions: `rollback_deployment` (high), `restart_deployment` (high), `scale_deployment` (low).
@@ -238,8 +237,8 @@ Each phase ends runnable, with tests, lint and docs updated.
 
 **Phase 4 — Copilot graph (read-only)**
 
-- Classifier, retrieval, parallel evidence, summarize, hypothesize, answer; `copilot_run`, `run_step`; node-tracing decorator; runs API.
-- End-to-end check: deploy `v2` → ask the payments question → answer cites latency + the v2 deploy.
+- Classifier, retrieval and parallel evidence, diagnose, knowledge answers; `copilot_run`, `run_step`; step recording; runs API; startup check that the chat model supports tool calling.
+- End-to-end check: deploy `v2` → ask the payments question → the diagnosis prompt contains the live latency spike, the v2 deploy, the pool-exhaustion logs, the runbook and the past incident. Tests use a scripted chat model that goes through LangChain's real structured-output path; whether a real model draws the right conclusion is measured by the Phase 7 evals.
 
 **Phase 5 — Remediation + approval**
 

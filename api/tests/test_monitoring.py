@@ -1,28 +1,15 @@
 """Runs against the live dev stack: the demo payments service, its load generator and the LGTM monitoring stack."""
 
-from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from src.core.config import MetricName, settings
 from src.core.exceptions import InvalidInputError, NotFoundError, UpstreamError
-from src.core.http import http_client
 from src.modules.deployments.deployment_service import DeploymentService
 from src.modules.monitoring.monitoring_service import MonitoringService
 from src.modules.monitoring.prometheus_adapter import PrometheusAdapter
 from tests.helpers import eventually
-
-DEPLOYMENT_URL = f"{settings.demo_payments_admin_url}/admin/deployments/payments"
-
-
-@pytest.fixture
-async def bad_release() -> AsyncIterator[None]:
-    """Deploys the demo service's faulty v2, then puts back whatever version was running before."""
-    previous_version = (await http_client.get(DEPLOYMENT_URL)).json()["version"]
-    (await http_client.post(f"{DEPLOYMENT_URL}/deploy", json={"version": "v2"})).raise_for_status()
-    yield
-    (await http_client.post(f"{DEPLOYMENT_URL}/deploy", json={"version": previous_version})).raise_for_status()
 
 
 async def test_bad_release_shows_up_in_every_evidence_source(bad_release: None):

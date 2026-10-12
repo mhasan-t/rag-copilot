@@ -12,7 +12,9 @@ _dev_url = make_url(os.environ["DATABASE_URL"])
 _test_url = _dev_url.set(database=f"{_dev_url.database}_test")
 os.environ["DATABASE_URL"] = _test_url.render_as_string(hide_password=False)
 
+from src.core.config import settings  # noqa: E402
 from src.core.database import Base, engine  # noqa: E402
+from src.core.http import http_client  # noqa: E402
 from src.main import app  # noqa: E402
 from src.modules.auth.cli import create_superuser  # noqa: E402
 from src.modules.auth.schemas import UserRead  # noqa: E402
@@ -73,3 +75,16 @@ async def regular_user(client: AsyncClient, superuser_headers: dict[str, str]) -
 @pytest.fixture
 async def regular_headers(client: AsyncClient, regular_user: UserRead) -> dict[str, str]:
     return await auth_headers(client, regular_user.email)
+
+
+@pytest.fixture
+async def bad_release() -> AsyncIterator[None]:
+    """Deploys the demo payments service's faulty v2, then puts back whatever version was running before.
+
+    Needs the dev stack's demo service; telemetry for the release takes several seconds to show up.
+    """
+    deployment_url = f"{settings.demo_payments_admin_url}/admin/deployments/payments"
+    previous_version = (await http_client.get(deployment_url)).json()["version"]
+    (await http_client.post(f"{deployment_url}/deploy", json={"version": "v2"})).raise_for_status()
+    yield
+    (await http_client.post(f"{deployment_url}/deploy", json={"version": previous_version})).raise_for_status()
