@@ -9,7 +9,8 @@ from alembic import context
 from src.core.config import settings
 from src.core.database import Base
 
-# Import every module's models here so autogenerate sees their tables.
+# Every module's models must be imported so autogenerate sees their tables.
+import src.modules.auth.models  # noqa: E402, F401  isort: skip
 
 config = context.config
 if config.config_file_name is not None:

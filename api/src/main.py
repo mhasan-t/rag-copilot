@@ -8,6 +8,8 @@ from src.core.database import engine
 from src.core.exception_handlers import register_exception_handlers
 from src.core.logging import configure_logging, log_requests
 from src.core.redis import redis_client
+from src.modules.auth.auth_router import router as auth_router
+from src.modules.auth.user_router import router as user_router
 from src.modules.health.health_router import router as health_router
 
 
@@ -23,7 +25,8 @@ def create_app() -> FastAPI:
     app = FastAPI(title=app_config.service.title, version=app_config.version, lifespan=lifespan)
     register_exception_handlers(app)
     app.middleware("http")(log_requests)
-    app.include_router(health_router, prefix="/v1")
+    for router in (health_router, auth_router, user_router):
+        app.include_router(router, prefix="/v1")
     return app
 
 

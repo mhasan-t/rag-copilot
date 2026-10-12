@@ -1,3 +1,6 @@
 service:
   name: rag-copilot-api
   title: Enterprise AI Operations Copilot
+
+auth:
+  access_token_ttl_minutes: 60

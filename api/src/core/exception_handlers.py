@@ -10,10 +10,12 @@ from src.core.exceptions import AppError
 from src.core.logging import logger
 
 
-def _error_response(status_code: int, code: str, message: str, details: Any = None) -> JSONResponse:
+def _error_response(
+    status_code: int, code: str, message: str, details: Any = None, headers: dict[str, str] | None = None
+) -> JSONResponse:
     """Every error response has the shape {"error": {"code", "message", "details"}}."""
     content = {"error": {"code": code, "message": message, "details": details}}
-    return JSONResponse(status_code=status_code, content=jsonable_encoder(content))
+    return JSONResponse(status_code=status_code, content=jsonable_encoder(content), headers=headers)
 
 
 async def _handle_app_error(request: Request, exc: AppError) -> JSONResponse:
@@ -22,7 +24,7 @@ async def _handle_app_error(request: Request, exc: AppError) -> JSONResponse:
         exc.message,
         extra={"error_code": exc.code, "details": exc.details, "method": request.method, "path": request.url.path},
     )
-    return _error_response(exc.status_code, exc.code, exc.message, exc.details)
+    return _error_response(exc.status_code, exc.code, exc.message, exc.details, exc.headers)
 
 
 async def _handle_http_exception(request: Request, exc: HTTPException) -> JSONResponse:

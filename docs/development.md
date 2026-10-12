@@ -27,7 +27,8 @@ The `api` container bind-mounts `api/` and reloads on change. Its virtualenv liv
 
 | Command | What it does |
 |---|---|
-| `make test` | Run pytest inside the api container (tests use the real Postgres and Redis) |
+| `make test` | Run pytest inside the api container. Tests use real Postgres and Redis, but a separate `<db>_test` database that is recreated from the migrations on every run, so dev data is never touched |
+| `make createsuperuser admin@example.com` | Create a superuser (prompts for the password) |
 | `make lint` / `make format` | Ruff check + format check / auto-fix + format, on the host |
 | `make revision m="add user table"` | Autogenerate an Alembic migration |
 | `make migrate` | Apply migrations |
@@ -60,9 +61,18 @@ Bundled integrations: `openai` (also any OpenAI-compatible server such as vLLM o
 
 Embeddings are configured the same way with the `EMBEDDING_*` variables. `EMBEDDING_DIMENSIONS` must match the embedding model's output size; changing the embedding model later requires a migration and re-indexing.
 
+## Users and authentication
+
+- There is no sign-up. Create the first superuser with `make createsuperuser <email>`; superusers then create regular users through `POST /v1/users`. Superusers can only be created through the CLI.
+- Log in with `POST /v1/auth/token` (`{"email", "password"}`) and send the returned token as `Authorization: Bearer <token>`. In the OpenAPI docs, use the **Authorize** button.
+- Tokens are JWTs signed with `AUTH_JWT_SECRET` and expire after `auth.access_token_ttl_minutes` (in `api/config/app.yaml`). Changing the secret logs everyone out.
+- The account is re-checked on every request: deactivating a user (`PATCH /v1/users/{id}` with `{"is_active": false}`) cuts off their existing tokens immediately, and a password reset revokes all tokens issued before it.
+- Emails are case-insensitive; passwords must be 12–128 characters.
+- Protected routes take the `CurrentUser` dependency, which also sets `request.state.user`. Permission rules live in policy classes (e.g. `UserPolicy`) and are checked in services.
+
 ## API conventions
 
 - Every public route is under `/v1`.
 - Errors always have the shape `{"error": {"code", "message", "details"}}`. Raise an `AppError` subclass anywhere; the global handlers log it and render the response. Don't catch-and-log or build error responses by hand.
 - Logs are JSON on stdout. Use the shared app logger and pass context with `extra={...}`; every request is logged with method, path, status and duration. `LOG_LEVEL` controls the app's own logs only.
-- `GET /v1/health` returns 200 when Postgres and Redis respond, otherwise 503 with the failing checks in `details`.
+- `GET /v1/health` returns 200 when Postgres and Redis respond, otherwise 503 with the failing checks in `details`. It needs no authentication; every other route except `POST /v1/auth/token` does.

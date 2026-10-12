@@ -1,8 +1,9 @@
 import tomllib
 from pathlib import Path
+from typing import Annotated
 
 import yaml
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings
 
 API_ROOT = Path(__file__).resolve().parents[2]
@@ -30,16 +31,24 @@ class Settings(BaseSettings):
     embedding_base_url: str | None = None
     embedding_api_key: SecretStr | None = None
 
+    # HS256 signing key for access tokens; rotating it logs everyone out.
+    auth_jwt_secret: Annotated[SecretStr, Field(min_length=32)]
+
 
 class ServiceConfig(BaseModel):
     name: str
     title: str
 
 
+class AuthConfig(BaseModel):
+    access_token_ttl_minutes: int
+
+
 class AppConfig(BaseModel):
     """Deployment-independent configuration from config/app.yaml."""
 
     service: ServiceConfig
+    auth: AuthConfig
     version: str
 
 
