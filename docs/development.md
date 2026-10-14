@@ -220,6 +220,10 @@ The UI calls the API on its own origin (`/v1/...`), and Vite forwards those requ
 - **Design tokens** (colours for surfaces, text and statuses) are defined once in `web/src/index.css`. Components use the token names (`bg-surface`, `text-danger`, ...), never raw palette colours.
 - **Browser tests:** `make web-e2e` runs Playwright in your installed Chrome against the running stack. It first creates two users and four runs in the dev database with the scripted LLM, tagged with a random suffix. It then signs in, browses runs, is refused approval of its own high-risk action, rejects it, approves a low-risk scale from the queue and waits for it to be verified (this really scales the demo service, and the teardown puts it back), and adds a user. Test data stays in the dev database; `make clean` removes it.
 
+## Kubernetes
+
+Production images, the Kubernetes manifests, the Kubernetes deployment backend and a local kind cluster are described in [Deployment](deployment.md).
+
 ## Users and authentication
 
 - There is no sign-up. Create the first superuser with `make createsuperuser <email>`; superusers then create regular users through `POST /v1/users`. Superusers can only be created through the CLI.

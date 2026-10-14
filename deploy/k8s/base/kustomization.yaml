@@ -1,0 +1,12 @@
+# The copilot itself: API, web UI and the migration job. Namespace-agnostic; an overlay sets the namespace and
+# provides the `copilot-config` ConfigMap and `copilot-secrets` Secret (see secret.example.yaml), Postgres, Redis,
+# and RBAC for the namespace whose Deployments the copilot may change.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - api.yaml
+  - migrate-job.yaml
+  - web.yaml
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: rag-copilot

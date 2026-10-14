@@ -3,7 +3,7 @@ DEV_COMPOSE = docker compose --env-file .env -f docker-compose.dev.yaml
 # Everything after the first Make goal is treated as positional arguments.
 ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
-.PHONY: prepare-env compose up up-f down clean logs migrate revision test lint format createsuperuser eval eval-record seed web-install web-types web-e2e demo-deploy demo-rollback psql redis-cli app_bash python
+.PHONY: k8s-tools k8s-up k8s-release k8s-verify k8s-ui k8s-down prepare-env compose up up-f down clean logs migrate revision test lint format createsuperuser eval eval-record seed web-install web-types web-e2e demo-deploy demo-rollback psql redis-cli app_bash python
 
 # Create local configuration once while preserving every developer override.
 prepare-env:
@@ -95,6 +95,69 @@ app_bash:
 
 python:
 	$(DEV_COMPOSE) exec api python $(ARGS)
+
+# Pinned Kubernetes tooling, downloaded into .tools/ (gitignored) and checksum-verified; nothing is installed system-wide.
+KIND_VERSION = v0.33.0
+KUBECTL_VERSION = v1.37.1
+TOOLS = $(CURDIR)/.tools
+KIND = $(TOOLS)/kind
+KUBECTL = $(TOOLS)/kubectl --context kind-rag-copilot
+
+$(TOOLS)/kind:
+	@mkdir -p $(TOOLS)
+	curl -fsSLo $@ https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-linux-amd64
+	echo "$$(curl -fsSL https://github.com/kubernetes-sigs/kind/releases/download/$(KIND_VERSION)/kind-linux-amd64.sha256sum | cut -d' ' -f1)  $@" | sha256sum -c -
+	chmod +x $@
+
+$(TOOLS)/kubectl:
+	@mkdir -p $(TOOLS)
+	curl -fsSLo $@ https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/linux/amd64/kubectl
+	echo "$$(curl -fsSL https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/linux/amd64/kubectl.sha256)  $@" | sha256sum -c -
+	chmod +x $@
+
+k8s-tools: $(TOOLS)/kind $(TOOLS)/kubectl
+
+# Local Kubernetes cluster (kind) running the production images and the deploy/k8s manifests. Rebuilds and
+# redeploys on every run. The dev compose stack can stay up: its LGTM container is shared for monitoring queries.
+k8s-up: k8s-tools
+	@$(KIND) get clusters 2>/dev/null | grep -qx rag-copilot || $(KIND) create cluster --config deploy/k8s/kind/cluster.yaml
+	docker build -q -t rag-copilot-api:kind api
+	docker build -q --target prod -t rag-copilot-web:kind web
+	docker build -q -t rag-copilot-payments:kind demo_payments
+	$(KIND) load docker-image --name rag-copilot rag-copilot-api:kind rag-copilot-web:kind rag-copilot-payments:kind
+	@# Lets pods reach the dev stack's LGTM container by name; fails harmlessly if already attached or not running.
+	-@docker network connect kind rag-copilot-lgtm-1 2>/dev/null
+	$(KUBECTL) apply -k deploy/k8s/kind/payments
+	-@$(KUBECTL) -n copilot delete job migrate --ignore-not-found 2>/dev/null
+	$(KUBECTL) apply -k deploy/k8s/kind/copilot
+	$(KUBECTL) -n copilot wait --for=condition=complete job/migrate --timeout=300s
+	@# Same image tag as before, so restart to pick up what was just loaded.
+	$(KUBECTL) -n copilot rollout restart deployment/api deployment/web
+	$(KUBECTL) -n copilot rollout status deployment/api deployment/web --timeout=300s
+
+# Release a version of the demo payments service in the cluster as a real rollout. Usage: make k8s-release v2
+k8s-release:
+	$(KUBECTL) -n payments patch deployment payments --type=json -p '[{"op": "replace", "path": "/spec/template/metadata/labels/app.kubernetes.io~1version", "value": "$(ARGS)"}, {"op": "replace", "path": "/spec/template/spec/containers/0/env/0/value", "value": "$(ARGS)"}]'
+	$(KUBECTL) -n payments rollout status deployment/payments --timeout=120s
+
+# Checks RBAC from outside, then the deployment adapter from inside the API pod (with its own service account).
+k8s-verify:
+	@echo "Service account copilot:copilot-api may:"
+	@for check in "patch deployments -n payments" "list replicasets -n payments" "delete deployments -n payments" \
+		"create deployments -n payments" "get secrets -n payments" "get pods -n payments" "patch deployments -n copilot"; do \
+		printf "  %-34s %s\n" "$$check" "$$($(KUBECTL) auth can-i $$check --as=system:serviceaccount:copilot:copilot-api)"; done
+	$(MAKE) --no-print-directory k8s-release v2
+	$(KUBECTL) -n copilot exec deploy/api -- python -m tests.k8s_check
+	@echo "Web UI and API through the web Service:"
+	@$(KUBECTL) -n copilot run web-check --rm -i --restart=Never --quiet --image=curlimages/curl:8.17.0 -- \
+		sh -c 'curl -fsS -o /dev/null -w "  GET /             %{http_code}\n" http://web/ && curl -fsS -w "\n" http://web/v1/health'
+
+# Open the UI running in the cluster at http://localhost:8090 (Ctrl-C to stop).
+k8s-ui:
+	$(KUBECTL) -n copilot port-forward svc/web 8090:80
+
+k8s-down:
+	$(KIND) delete cluster --name rag-copilot
 
 # Accept positional arguments as Make goals.
 %:

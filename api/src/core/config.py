@@ -36,9 +36,13 @@ class Settings(BaseSettings):
     loki_url: str
     tempo_url: str
 
-    # Where deployment state comes from (and, later, where rollbacks are executed).
-    deployment_backend: Literal["demo"]
+    # Where deployment state comes from and where rollbacks, restarts and scaling are carried out.
+    deployment_backend: Literal["demo", "kubernetes"]
     demo_payments_admin_url: str | None = None
+    # true: use the pod's service account; false: use the local kubeconfig (KUBECONFIG or ~/.kube/config).
+    kubernetes_in_cluster: bool = True
+    # The namespace whose Deployments the copilot inspects and changes; service names are Deployment names.
+    kubernetes_namespace: str | None = None
 
     # The API's own traces, metrics and logs, exported over OTLP/HTTP (e.g. to the LGTM stack's collector).
     telemetry_traces_enabled: bool = False
@@ -51,6 +55,8 @@ class Settings(BaseSettings):
     def _require_backend_settings(self) -> Self:
         if self.deployment_backend == "demo" and not self.demo_payments_admin_url:
             raise ValueError("DEMO_PAYMENTS_ADMIN_URL is required when DEPLOYMENT_BACKEND=demo")
+        if self.deployment_backend == "kubernetes" and not self.kubernetes_namespace:
+            raise ValueError("KUBERNETES_NAMESPACE is required when DEPLOYMENT_BACKEND=kubernetes")
         if self.telemetry_traces_enabled and not self.otel_exporter_otlp_endpoint:
             raise ValueError("OTEL_EXPORTER_OTLP_ENDPOINT is required when TELEMETRY_TRACES_ENABLED=true")
         return self

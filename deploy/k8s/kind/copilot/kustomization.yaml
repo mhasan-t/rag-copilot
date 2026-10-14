@@ -1,0 +1,47 @@
+# The copilot in a local kind cluster, with throwaway Postgres and Redis. Dev values only.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: copilot
+resources:
+  - namespace.yaml
+  - ../../base
+  - datastores.yaml
+images:
+  # Built locally and loaded into the cluster by `make k8s-up`.
+  - name: rag-copilot-api
+    newTag: kind
+  - name: rag-copilot-web
+    newTag: kind
+replicas:
+  - name: api
+    count: 1
+  - name: web
+    count: 1
+configMapGenerator:
+  - name: copilot-config
+    literals:
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://redis:6379/0
+      # The dev compose stack's LGTM container, attached to the kind network by `make k8s-up`.
+      - PROMETHEUS_URL=http://rag-copilot-lgtm-1:9090
+      - LOKI_URL=http://rag-copilot-lgtm-1:3100
+      - TEMPO_URL=http://rag-copilot-lgtm-1:3200
+      - TELEMETRY_TRACES_ENABLED=false
+      # The copilot controls Deployments in the payments namespace (see ../payments for its RBAC).
+      - DEPLOYMENT_BACKEND=kubernetes
+      - KUBERNETES_IN_CLUSTER=true
+      - KUBERNETES_NAMESPACE=payments
+      # An Ollama on the host; the kind network's gateway is the host.
+      - LLM_PROVIDER=ollama
+      - LLM_MODEL=qwen3:8b
+      - LLM_BASE_URL=http://172.18.0.1:11434
+      - EMBEDDING_PROVIDER=ollama
+      - EMBEDDING_MODEL=nomic-embed-text
+      - EMBEDDING_DIMENSIONS=768
+      - EMBEDDING_BASE_URL=http://172.18.0.1:11434
+secretGenerator:
+  - name: copilot-secrets
+    literals:
+      - DATABASE_URL=postgresql+asyncpg://copilot:copilot@postgres:5432/copilot
+      - AUTH_JWT_SECRET=kind-only-insecure-jwt-secret-change-me-00000
+      - POSTGRES_PASSWORD=copilot

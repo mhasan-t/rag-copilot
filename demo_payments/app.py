@@ -6,6 +6,7 @@ Each "version" changes how the service behaves; deploying v2 produces a latency 
 
 import asyncio
 import logging
+import os
 import random
 import uuid
 from dataclasses import dataclass
@@ -55,8 +56,12 @@ class ScaleRequest(BaseModel):
     replicas: int = Field(ge=1, le=20)
 
 
-# In-memory on purpose: restarting the container is a "fresh install" of v1.
-_history = [Revision(revision=1, version="v1", deployed_at=datetime.now(UTC))]
+# In-memory on purpose: restarting the container is a fresh install. In Kubernetes, DEMO_VERSION in the pod spec is
+# the version, so deploying and rolling back are real rollouts and the admin endpoints aren't used.
+_initial_version = os.environ.get("DEMO_VERSION", "v1")
+if _initial_version not in VERSIONS:
+    raise SystemExit(f"DEMO_VERSION must be one of {sorted(VERSIONS)}")
+_history = [Revision(revision=1, version=_initial_version, deployed_at=datetime.now(UTC))]
 _replicas = 1
 
 app = FastAPI(title="Demo payments service")

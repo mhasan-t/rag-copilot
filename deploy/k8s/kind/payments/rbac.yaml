@@ -1,0 +1,28 @@
+# Exactly what the copilot's deployment adapter needs in this namespace, and nothing else: read Deployments and their
+# ReplicaSets (state and rollout history), and patch Deployments (rollback, restart, scale). No create or delete,
+# no pods, no secrets, and no access to any other namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: copilot-deployment-control
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, patch]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: copilot-deployment-control
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: copilot-deployment-control
+subjects:
+  # The API's service account, in the copilot's own namespace.
+  - kind: ServiceAccount
+    name: copilot-api
+    namespace: copilot

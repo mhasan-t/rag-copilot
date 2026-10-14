@@ -1,0 +1,12 @@
+# The workload the copilot investigates and remediates, and the permissions it has over it. Applied separately from
+# ../copilot because it lives in another namespace.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: payments
+resources:
+  - namespace.yaml
+  - payments.yaml
+  - rbac.yaml
+images:
+  - name: rag-copilot-payments
+    newTag: kind

@@ -87,5 +87,6 @@ def _shift(evidence: Evidence, delta: timedelta) -> Evidence:
         trace.started_at += delta
     if shifted.deployment is not None:
         for revision in shifted.deployment.history:
-            revision.deployed_at += delta
+            if revision.deployed_at is not None:
+                revision.deployed_at += delta
     return shifted

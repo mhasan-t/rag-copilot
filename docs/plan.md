@@ -277,6 +277,9 @@ Each phase ends runnable, with tests, lint and docs updated.
 
 - Manifests for api, web, migrate Job, ConfigMap, Secret template; RBAC limited to the deployments/namespace the copilot may roll back/scale/restart.
 - `kubernetes` deployment adapter (`DEPLOYMENT_BACKEND=kubernetes`), verified against a local kind cluster.
+- Built: kustomize base (`deploy/k8s/base`) plus kind overlays; production web image (nginx-unprivileged, `/v1` forwarded); adapter on `kubernetes_asyncio` (rollback = `rollout undo` semantics via JSON patch, restart = template annotation, scale = `spec.replicas`). The demo service's version comes from `DEMO_VERSION` plus the `app.kubernetes.io/version` label, so releases in kind are real rollouts.
+- `make k8s-up` / `k8s-verify` / `k8s-down`, with kind and kubectl pinned and checksum-verified in `.tools/`. `k8s-verify` checks the RBAC with `auth can-i`, then runs the adapter from inside the API pod with its own service account.
+- Kubernetes doesn't record when a revision went live: rollbacks reuse old ReplicaSets. Fresh revisions use the ReplicaSet creation time; the current reused revision uses the last rollout progress (never earlier than the revision before it); older reused revisions report an unknown time, and the LLM is told so rather than given a misleading one.
 
 **Later**
 

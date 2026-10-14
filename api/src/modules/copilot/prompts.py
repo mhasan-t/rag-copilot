@@ -108,7 +108,8 @@ def _render_deployment(evidence: Evidence) -> str:
     if deployment is None:
         return "Not available."
     history = "\n".join(
-        f"- revision {revision.revision}: {revision.version} deployed {_time(revision.deployed_at)} UTC"
+        f"- revision {revision.revision}: {revision.version} deployed "
+        + (f"{_time(revision.deployed_at)} UTC" if revision.deployed_at else "at an unknown time (by a rollback)")
         for revision in deployment.history[:5]
     )
     return f"Current version {deployment.version}, {deployment.replicas} replica(s). History, newest first:\n{history}"

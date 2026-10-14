@@ -107,7 +107,9 @@ services:
 
   # React UI with hot reload; it calls /v1 on its own origin and Vite forwards that to the api.
   web:
-    build: ./web
+    build:
+      context: ./web
+      target: dev
     environment:
       API_PROXY_TARGET: http://api:8000
     ports:

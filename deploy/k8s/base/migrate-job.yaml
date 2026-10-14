@@ -1,0 +1,43 @@
+# Applies database migrations. A Job's pod template can't be changed, so delete the old Job before applying a new
+# image (`make k8s-up` does). API pods that start first fail their startup checks and restart until it has run.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  labels:
+    app.kubernetes.io/name: migrate
+spec:
+  # Retries back off exponentially, so 6 covers ~10 minutes of the database not being reachable yet.
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: migrate
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: rag-copilot-api
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef:
+                name: copilot-config
+            - secretRef:
+                name: copilot-secrets
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
