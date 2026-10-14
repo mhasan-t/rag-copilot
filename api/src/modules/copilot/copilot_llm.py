@@ -2,7 +2,8 @@ import asyncio
 from typing import Any
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from opentelemetry import metrics, trace
 from pydantic import BaseModel
 
 from src.core.config import app_config
@@ -11,6 +12,10 @@ from src.modules.copilot import prompts
 from src.modules.copilot.run_step_service import RunStepService
 from src.modules.copilot.schemas import Classification, Diagnosis, Evidence
 from src.modules.knowledge.schemas import SearchHit
+
+_tokens = metrics.get_meter(__name__).create_counter(
+    "copilot.llm.tokens", unit="{token}", description="Tokens sent to and received from the LLM"
+)
 
 
 class CopilotLLM:
@@ -37,6 +42,7 @@ class CopilotLLM:
         ]
         async with self._steps.track("answer_knowledge", tool_name="llm", input=_loggable(messages)) as step:
             response = await self._call(self._chat_model.ainvoke(messages))
+            _record_usage("answer_knowledge", self._chat_model, response)
             step.output = response.content
         return str(response.content)
 
@@ -44,7 +50,15 @@ class CopilotLLM:
         self, node: str, model: BaseChatModel, schema: type[T], messages: list[BaseMessage]
     ) -> T:
         async with self._steps.track(node, tool_name="llm", input=_loggable(messages)) as step:
-            result = await self._call(model.with_structured_output(schema).ainvoke(messages))
+            # include_raw keeps the model's actual reply, which is where token usage is reported.
+            response = await self._call(model.with_structured_output(schema, include_raw=True).ainvoke(messages))
+            _record_usage(node, model, response["raw"])
+            result = response["parsed"]
+            if result is None:
+                raise UpstreamError(
+                    f"LLM reply didn't match the {schema.__name__} schema",
+                    details={"error": str(response["parsing_error"] or "no structured output")[:300]},
+                )
             step.output = result
         return result
 
@@ -62,3 +76,16 @@ class CopilotLLM:
 
 def _loggable(messages: list[BaseMessage]) -> list[dict[str, Any]]:
     return [{"role": message.type, "content": message.content} for message in messages]
+
+
+def _record_usage(node: str, model: BaseChatModel, response: AIMessage) -> None:
+    """Token counts on the step's span (GenAI semantic conventions) and in the token counter, when reported."""
+    model_name = getattr(model, "model_name", None) or getattr(model, "model", None) or type(model).__name__
+    span = trace.get_current_span()
+    span.set_attribute("gen_ai.request.model", str(model_name))
+    usage = response.usage_metadata
+    if usage is None:  # not every provider reports usage
+        return
+    for token_type, count in (("input", usage["input_tokens"]), ("output", usage["output_tokens"])):
+        span.set_attribute(f"gen_ai.usage.{token_type}_tokens", count)
+        _tokens.add(count, {"node": node, "type": token_type, "model": str(model_name)})

@@ -16,6 +16,9 @@ x-api: &api
     TEMPO_URL: http://lgtm:3200
     DEPLOYMENT_BACKEND: demo
     DEMO_PAYMENTS_ADMIN_URL: http://payments:8000
+    # The API's own traces, metrics and logs go to the same LGTM stack it monitors.
+    TELEMETRY_TRACES_ENABLED: ${TELEMETRY_TRACES_ENABLED:-true}
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://lgtm:4318
   # Lets the containers reach model servers running on the host (e.g. Ollama).
   extra_hosts:
     - host.docker.internal:host-gateway

@@ -19,7 +19,7 @@ make clean     # stop and delete the database and telemetry volumes
 | Service | URL |
 |---|---|
 | API (OpenAPI docs at `/docs`) | http://localhost:8000 |
-| Grafana (Loki, Tempo, Prometheus datasources preconfigured; **Demo payments service** dashboard) | http://localhost:3000 |
+| Grafana (Loki, Tempo, Prometheus datasources preconfigured; **Copilot** and **Demo payments service** dashboards) | http://localhost:3000 |
 | Demo payments service (admin API under `/admin/deployments/payments`) | http://localhost:8001 |
 
 The `api` container bind-mounts `api/` and reloads on change. Its virtualenv lives in `/opt/venv` inside the image, so it isn't hidden by the mount; rebuild (`make up`) after changing dependencies.
@@ -149,6 +149,26 @@ The LLM can only pick from this list. Risk comes from the catalog, and the targe
 Paused runs are saved by LangGraph's Postgres checkpointer, so they survive API restarts. The checkpointer creates its own `checkpoint*` tables; Alembic ignores them.
 
 Known limit: the action and its verification run as an in-process background task. A graceful shutdown waits for it to finish, but if the API process crashes during those minutes, that work stops. The run then stays `running` and the proposal stays `executing`, and you have to check the service yourself.
+
+## Observing the copilot
+
+The API sends its own traces, metrics and logs over OTLP to the same LGTM stack it monitors. This is on by default in dev; set `TELEMETRY_TRACES_ENABLED=false` in the root `.env` to turn it off. When it's on, `OTEL_EXPORTER_OTLP_ENDPOINT` is required.
+
+- **Traces (Tempo):** every HTTP request, database query and outgoing HTTP call (monitoring stack, deployment backend, LLM providers) is traced automatically. Each copilot run is one trace, `copilot.run`, with a child span per graph node, evidence query and LLM call. LLM spans carry `gen_ai.usage.input_tokens` and `gen_ai.usage.output_tokens` when the provider reports them. The work after an approval is its own trace, `copilot.resume`.
+- **Audit trail ↔ traces:** every row from `GET /v1/copilot/runs/{id}/steps` has a `trace_id`. Paste it into Grafana's Explore → Tempo to see timings next to the step's recorded inputs and outputs.
+- **Logs:** stdout JSON logs include `trace_id` and `span_id`. The same logs go to Loki (`{service_name="rag-copilot-api"}`), where Grafana links them to their traces.
+- **Metrics (Prometheus):**
+
+| Metric | Labels | Meaning |
+|---|---|---|
+| `copilot_runs_total` | `status` | Runs reaching awaiting_approval, completed, rejected or failed |
+| `copilot_step_duration_milliseconds` | `node`, `tool`, `error` | Every node (`tool` empty), evidence query and LLM call (`tool="llm"`) |
+| `copilot_llm_tokens_total` | `node`, `type`, `model` | Input/output tokens, when the provider reports them |
+| `copilot_remediation_events_total` | `event`, `action`, `risk` | proposed, approved, rejected, verified, unverified, failed |
+
+The **Copilot** dashboard shows runs by outcome, remediation events, step errors, p95 latency per node and per LLM call, tokens per minute, recent run traces, and warning/error logs. Metrics are exported every 10 s; rate panels need two exports before they show anything.
+
+Tests don't export anything: they install in-memory providers and assert on the spans and metrics a run produces.
 
 ## Users and authentication
 

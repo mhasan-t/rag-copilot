@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     deployment_backend: Literal["demo"]
     demo_payments_admin_url: str | None = None
 
+    # The API's own traces, metrics and logs, exported over OTLP/HTTP (e.g. to the LGTM stack's collector).
+    telemetry_traces_enabled: bool = False
+    otel_exporter_otlp_endpoint: str | None = None
+
     # HS256 signing key for access tokens; rotating it logs everyone out.
     auth_jwt_secret: Annotated[SecretStr, Field(min_length=32)]
 
@@ -47,6 +51,8 @@ class Settings(BaseSettings):
     def _require_backend_settings(self) -> Self:
         if self.deployment_backend == "demo" and not self.demo_payments_admin_url:
             raise ValueError("DEMO_PAYMENTS_ADMIN_URL is required when DEPLOYMENT_BACKEND=demo")
+        if self.telemetry_traces_enabled and not self.otel_exporter_otlp_endpoint:
+            raise ValueError("OTEL_EXPORTER_OTLP_ENDPOINT is required when TELEMETRY_TRACES_ENABLED=true")
         return self
 
 

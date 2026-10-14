@@ -12,6 +12,8 @@ from sqlalchemy import make_url, text
 _dev_url = make_url(os.environ["DATABASE_URL"])
 _test_url = _dev_url.set(database=f"{_dev_url.database}_test")
 os.environ["DATABASE_URL"] = _test_url.render_as_string(hide_password=False)
+# Tests capture telemetry in memory (below) instead of exporting it to the dev stack.
+os.environ["TELEMETRY_TRACES_ENABLED"] = "false"
 
 from src.core import background  # noqa: E402
 from src.core.config import settings  # noqa: E402
@@ -33,6 +35,7 @@ from tests.copilot_helpers import classify_as, diagnosis_from  # noqa: E402
 from tests.fake_chat_model import ScriptedChatModel  # noqa: E402
 from tests.fake_embeddings import WordHashEmbeddings  # noqa: E402
 from tests.helpers import PASSWORD, auth_headers  # noqa: E402
+from tests.telemetry_capture import METRICS, SPANS  # noqa: E402, F401  installs in-memory telemetry
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -41,6 +41,7 @@ class RunStepRead(BaseModel):
     output: Any
     error: str | None
     duration_ms: int
+    trace_id: str | None = Field(description="OpenTelemetry trace id; open it in Grafana's Tempo view")
     created_at: datetime
 
 

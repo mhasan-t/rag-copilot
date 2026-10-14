@@ -48,5 +48,8 @@ class RunStep(Base):
     output: Mapped[Any | None] = mapped_column(JSONB)
     error: Mapped[str | None] = mapped_column(Text)
     duration_ms: Mapped[int] = mapped_column(Integer)
+    trace_id: Mapped[str | None] = mapped_column(
+        String(32), comment="OpenTelemetry trace the step ran in; look it up in Tempo. Null when tracing is off"
+    )
     # clock_timestamp(), not now(): parallel steps need distinct, real times for ordering.
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())

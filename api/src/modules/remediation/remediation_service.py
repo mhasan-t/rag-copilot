@@ -3,6 +3,7 @@ import time
 import uuid
 from datetime import UTC, datetime
 
+from opentelemetry import metrics
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import ActionName, RiskLevel, app_config
@@ -18,6 +19,12 @@ from src.modules.remediation.models import RemediationProposal
 from src.modules.remediation.remediation_query import RemediationQuery
 from src.modules.remediation.remediation_repository import RemediationRepository
 from src.modules.remediation.schemas import Decision, MetricCheck, ProposedAction, RemediationRead, Verification
+
+_events = metrics.get_meter(__name__).create_counter(
+    "copilot.remediation.events",
+    unit="{event}",
+    description="Remediation proposals reaching a status: proposed, approved, rejected, verified, unverified, failed",
+)
 
 # Recent enough to reflect the action, long enough for a stable rate (the queries use a 60 s rate window).
 VERIFY_WINDOW_MINUTES = 5
@@ -50,6 +57,7 @@ class RemediationService:
         )
         await self._session.commit()
         logger.info("remediation proposed", extra={"proposal_id": proposal.id, "action": proposal.action})
+        _count("proposed", proposal)
         return await self._read(proposal.id)
 
     async def get(self, actor: UserRead, proposal_id: uuid.UUID) -> RemediationRead:
@@ -81,6 +89,7 @@ class RemediationService:
         )
         await self._session.commit()
         logger.warning(f"remediation {decision}", extra={"proposal_id": proposal_id, "actor_id": actor.id})
+        _count(decision, proposal)
         return await self._read(proposal_id)
 
     async def execute(self, proposal_id: uuid.UUID) -> RemediationRead:
@@ -102,6 +111,7 @@ class RemediationService:
             await self._repository.transition(proposal_id, "executing", "failed")
             await self._session.commit()
             logger.error("remediation failed", extra={"proposal_id": proposal_id, "error": exc.message})
+            _count("failed", proposal)
             return await self._read(proposal_id)
 
         await self._repository.update_execution(
@@ -127,6 +137,7 @@ class RemediationService:
         await self._repository.transition(proposal_id, "executing", "verified" if verification.passed else "unverified")
         await self._session.commit()
         logger.info("remediation verified", extra={"proposal_id": proposal_id, "passed": verification.passed})
+        _count("verified" if verification.passed else "unverified", proposal)
         return await self._read(proposal_id)
 
     async def abandon(self, run_id: uuid.UUID, reason: str) -> None:
@@ -145,6 +156,7 @@ class RemediationService:
             )
         await self._session.commit()
         logger.error("remediation abandoned", extra={"proposal_id": proposal.id, "reason": reason})
+        _count("failed", proposal)
 
     async def _check_metrics(self, service: str, started: float) -> Verification:
         monitoring = MonitoringService()
@@ -191,3 +203,7 @@ class RemediationService:
 
     async def _read(self, proposal_id: uuid.UUID) -> RemediationRead:
         return RemediationRead.model_validate(await self._require(proposal_id))
+
+
+def _count(event: str, proposal: RemediationProposal) -> None:
+    _events.add(1, {"event": event, "action": proposal.action, "risk": proposal.risk_level})

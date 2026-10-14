@@ -5,6 +5,7 @@ from typing import Any
 
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models import BaseChatModel
+from opentelemetry import metrics, trace
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core import background
@@ -23,6 +24,11 @@ from src.modules.copilot.schemas import RunRead, RunStepRead
 from src.modules.remediation.remediation_query import RemediationQuery
 from src.modules.remediation.remediation_service import RemediationService
 from src.modules.remediation.schemas import Decision, RemediationRead
+
+_tracer = trace.get_tracer(__name__)
+_runs = metrics.get_meter(__name__).create_counter(
+    "copilot.runs", unit="{run}", description="Copilot runs reaching a status other than running"
+)
 
 
 class CopilotModels:
@@ -49,7 +55,8 @@ class RunService:
         run = await self._repository.create_run(user_id=actor.id, question=question, status="running")
         await self._session.commit()
         logger.info("copilot run started", extra={"run_id": run.id, "user_id": actor.id})
-        await self._advance(run, lambda: models.graph(run.id).run(question))
+        with _tracer.start_as_current_span("copilot.run", attributes={"copilot.run_id": str(run.id)}):
+            await self._advance(run, lambda: models.graph(run.id).run(question))
         return await self._read(run)
 
     async def decide_remediation(
@@ -77,7 +84,9 @@ class RunService:
             if run is None:
                 raise NotFoundError("Run not found", details={"run_id": run_id})
             await service._update(run, status="running")
-            await service._advance(run, lambda: models.graph(run_id).resume(decision))
+            attributes = {"copilot.run_id": str(run_id), "copilot.decision": decision}
+            with _tracer.start_as_current_span("copilot.resume", attributes=attributes):
+                await service._advance(run, lambda: models.graph(run_id).resume(decision))
 
     async def get(self, actor: UserRead, run_id: uuid.UUID) -> RunRead:
         return await self._read(await self._get_visible(actor, run_id))
@@ -125,6 +134,8 @@ class RunService:
         await self._repository.update_run(run, **values)
         await self._session.commit()
         logger.info("copilot run updated", extra={"run_id": run.id, "status": run.status})
+        if run.status != "running":
+            _runs.add(1, {"status": run.status})
 
     async def _read(self, run: CopilotRun) -> RunRead:
         [read] = await self._read_many([run])

@@ -10,6 +10,7 @@ from src.core.exception_handlers import register_exception_handlers
 from src.core.http import http_client
 from src.core.logging import configure_logging, log_requests
 from src.core.redis import redis_client
+from src.core.telemetry import configure_telemetry, shutdown_telemetry
 from src.modules.auth.auth_router import router as auth_router
 from src.modules.auth.user_router import router as user_router
 from src.modules.copilot.checkpointer import close_checkpointer
@@ -34,6 +35,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
     await engine.dispose()
     await redis_client.aclose()
     await http_client.aclose()
+    shutdown_telemetry()
 
 
 def create_app() -> FastAPI:
@@ -44,6 +46,7 @@ def create_app() -> FastAPI:
     routers = (health_router, auth_router, user_router, incident_router, knowledge_router, copilot_router)
     for router in (*routers, remediation_router):
         app.include_router(router, prefix="/v1")
+    configure_telemetry(app)
     return app
 
 

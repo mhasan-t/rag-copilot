@@ -4,6 +4,8 @@ import time
 from collections.abc import Awaitable, Callable
 
 from fastapi import Request, Response
+from opentelemetry import trace
+from opentelemetry.trace import format_span_id, format_trace_id
 
 from src.core.config import app_config
 
@@ -23,6 +25,11 @@ class JsonFormatter(logging.Formatter):
             "message": record.getMessage(),
         }
         payload.update({k: v for k, v in vars(record).items() if k not in _STANDARD_RECORD_ATTRS})
+        # Lets a log line be looked up in Tempo, and a trace's logs be found in Loki.
+        span_context = trace.get_current_span().get_span_context()
+        if span_context.is_valid:
+            payload["trace_id"] = format_trace_id(span_context.trace_id)
+            payload["span_id"] = format_span_id(span_context.span_id)
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload, default=str)

@@ -34,8 +34,11 @@ class ScriptedChatModel(BaseChatModel):
         prompt = "\n\n".join(str(message.content) for message in messages)
         self.prompts.setdefault(key, []).append(prompt)
         result = self.handlers[key](prompt)
+        # Deterministic stand-in for provider-reported usage: one token per word in, a fixed 10 out.
+        usage = {"input_tokens": len(prompt.split()), "output_tokens": 10, "total_tokens": len(prompt.split()) + 10}
         if tools:
-            message = AIMessage(content="", tool_calls=[{"name": key, "args": result, "id": "call-1"}])
+            tool_call = {"name": key, "args": result, "id": "call-1"}
+            message = AIMessage(content="", tool_calls=[tool_call], usage_metadata=usage)
         else:
-            message = AIMessage(content=result)
+            message = AIMessage(content=result, usage_metadata=usage)
         return ChatResult(generations=[ChatGeneration(message=message)])

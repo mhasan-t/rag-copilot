@@ -100,7 +100,7 @@ Each module uses only the files it needs from:
 | `document_chunk`       | id, document_id, chunk_index, content, embedding vector(N), embedding_model                                             | HNSW index; N = `EMBEDDING_DIMENSIONS` when the migration ran. Service filter joins `document` (no copied tags) |
 | `incident`             | id, service, severity, title, summary, status, started_at, resolved_at                                                  | Seeded in dev                                                                                      |
 | `copilot_run`          | id, user_id, question, classification, status (running/awaiting_approval/completed/failed/rejected), answer, created_at | One per question                                                                                   |
-| `run_step`             | id, run_id, node, tool_name, input, output, error, duration_ms, created_at (trace_id in Phase 6)                                 | Audit trail; secrets redacted                                                                      |
+| `run_step`             | id, run_id, node, tool_name, input, output, error, duration_ms, trace_id, created_at                                 | Audit trail; secrets redacted                                                                      |
 | `remediation_proposal` | id, run_id (unique), service, action, params, risk_level, rationale, status                                                     | proposed → approved/rejected; approved → executing → verified/unverified/failed                                                |
 | `approval`             | id, proposal_id (unique), approver_id, decision, comment, decided_at                                                             | One decision per proposal                                                                                                    |
 | `action_execution`     | id, proposal_id (unique), started_at, finished_at, result, error, verification                                                | At most one execution per proposal                                                                                                    |
@@ -135,7 +135,7 @@ classify ──► knowledge ──► retrieve_documents ──► answer_knowl
 - Classification is structured output (`category`, `service`, `window_minutes`). The classifier's output is treated as untrusted: invalid service names are dropped and the window is clamped.
 - Summarising evidence and hypothesising a cause are one `diagnose` call: evidence is summarised deterministically in code first (downsampled series, grouped logs), so a separate LLM summarisation step adds latency without adding information.
 - An evidence source that fails (backend down, unknown service) is reported to the LLM as unavailable instead of failing the run.
-- One wrapper records every node as a `run_step` row; every tool query and LLM call (with its exact messages) gets its own row. OTel spans come in Phase 6.
+- One wrapper records every node as a `run_step` row; every tool query and LLM call (with its exact messages) gets its own row. The same wrapper opens an OTel span per step and stores its trace id on the row.
 - Actions are declared in `config/app.yaml` with a `risk` (`low`, `high`); the LLM can only pick from them, with typed arguments, and risk always comes from the catalog. The target is always the investigated service, never an LLM choice. Executing anything not approved raises `ForbiddenError` in `RemediationService`: the graph is not the only gate.
 - PromQL/LogQL are built from templates per tool (e.g. `latency_p99(service, window)`), not free-form LLM queries. That keeps queries valid and bounded.
 - MVP actions: `rollback_deployment` (high), `restart_deployment` (high), `scale_deployment` (low).
@@ -251,7 +251,10 @@ Each phase ends runnable, with tests, lint and docs updated.
 
 **Phase 6 — Observability of the copilot**
 
-- OTel instrumentation (FastAPI, SQLAlchemy, httpx, LangChain), trace_id in logs and `run_step`; Grafana dashboard: runs, per-node latency, token usage, approvals, tool errors.
+- OTel traces, metrics and logs over OTLP to the LGTM stack (`TELEMETRY_TRACES_ENABLED`, on by default in dev). Auto-instrumented: FastAPI, SQLAlchemy, httpx. LangChain is covered by our own step spans rather than a third-party instrumentation: every node, evidence query and LLM call already passes through one wrapper, and LLM spans carry GenAI token-usage attributes (via `include_raw` structured output).
+- `trace_id` in JSON logs and on every `run_step` row; one trace per run (`copilot.run`) and per resume after approval (`copilot.resume`).
+- Metrics: `copilot.runs` (by status), `copilot.step.duration` (by node, tool, error), `copilot.llm.tokens` (by node, type, model), `copilot.remediation.events` (by event, action, risk).
+- Grafana "Copilot" dashboard: runs by outcome, remediation events, step errors, node and LLM latency p95, tokens per minute, recent run traces, warning/error logs.
 
 **Phase 7 — Evaluation**
 
