@@ -29,6 +29,7 @@ The `api` container bind-mounts `api/` and reloads on change. Its virtualenv liv
 | Command | What it does |
 |---|---|
 | `make test` | Run pytest inside the api container. Tests use real Postgres and Redis, but a separate `<db>_test` database that is recreated from the migrations on every run, so dev data is never touched. Monitoring tests query the live stack and briefly deploy the demo service's `v2`, so the whole stack must be up; they take ~40 s |
+| `make eval` | Score the copilot against a real LLM (see [Evaluating the copilot](#evaluating-the-copilot)) |
 | `make seed` | Load example incidents (skipped if the table has rows) and ingest `api/seed/documents/*.md` (unchanged files are skipped). Ingesting needs the embedding provider to be running |
 | `make demo-deploy v2` / `make demo-rollback` | Release the demo service's faulty `v2` / roll back to the previous version |
 | `make createsuperuser admin@example.com` | Create a superuser (prompts for the password) |
@@ -169,6 +170,34 @@ The API sends its own traces, metrics and logs over OTLP to the same LGTM stack 
 The **Copilot** dashboard shows runs by outcome, remediation events, step errors, p95 latency per node and per LLM call, tokens per minute, recent run traces, and warning/error logs. Metrics are exported every 10 s; rate panels need two exports before they show anything.
 
 Tests don't export anything: they install in-memory providers and assert on the spans and metrics a run produces.
+
+## Evaluating the copilot
+
+Tests prove the plumbing works; evals measure whether a real model makes the right calls. `make eval` runs the cases in `api/evals/datasets/copilot.yaml` against the configured LLM and prints a pass/fail line per case:
+
+```sh
+make eval                                   # LLM_PROVIDER / LLM_MODEL from api/.env
+make eval model=qwen3:14b                   # another model from the same provider
+make eval provider=openai model=gpt-5-mini  # another provider; its SDK reads its own key, e.g. OPENAI_API_KEY
+make eval case=prompt-injection-in-logs     # one case
+```
+
+It exits non-zero below the dataset's `min_pass_rate` (80%). A JSON report with every answer is written to `api/evals/reports/`, which is gitignored. That's the way to compare models: same cases, same evidence, only the LLM changes.
+
+**What a case checks** (all optional): the classifier's category and service; which evidence queries ran; words the answer must contain (each group needs at least one); and the proposed action, or `none`. A proposed action must also leave the run waiting for approval.
+
+**Reproducible evidence:** cases name a *scenario*, a recorded snapshot of what the monitoring stack and deployment backend returned (`api/evals/fixtures/*.json`). Replay shifts its timestamps to "now", so evals give the same picture whenever they run and never touch the live stack or the demo service. Runbooks and incidents are the seed data. Evals use their own `<db>_eval` database, recreated each run, and need the embedding provider for retrieval.
+
+| Scenario | How it was made |
+|---|---|
+| `healthy` | Recorded: demo v1, no deployment in the window |
+| `bad_release` | Recorded: v2 deployed 3 minutes earlier (latency spike, pool-exhaustion errors) |
+| `card_network` | `healthy` with ~3% card-network declines written in |
+| `injected_logs` | `bad_release` plus a log line telling the AI to scale instead of rolling back |
+
+To re-record after changing the demo service or the queries: `make compose restart payments`, then `make eval-record` (~15 min; it deploys v2 for a few minutes and then v1 again).
+
+The harness is tested too (`make test`), with scripted models: one that answers exactly as the dataset expects must pass every case, and one that knows nothing must fail the right checks.
 
 ## Users and authentication
 

@@ -19,13 +19,16 @@ def _connection_kwargs(base_url: str | None, api_key: SecretStr | None) -> dict[
     return kwargs
 
 
-def build_chat_model(model: str | None = None) -> BaseChatModel:
-    """Chat model for the configured provider; `model` overrides LLM_MODEL (e.g. the classifier model)."""
+def build_chat_model(model: str | None = None, provider: str | None = None) -> BaseChatModel:
+    """Chat model for the configured provider; `model` and `provider` override LLM_MODEL and LLM_PROVIDER.
+
+    With a different provider, LLM_BASE_URL and LLM_API_KEY don't apply; the provider's SDK reads its own
+    environment variables (e.g. OPENAI_API_KEY) instead.
+    """
+    same_provider = provider in (None, settings.llm_provider)
+    connection = _connection_kwargs(settings.llm_base_url, settings.llm_api_key) if same_provider else {}
     return init_chat_model(
-        model or settings.llm_model,
-        model_provider=settings.llm_provider,
-        temperature=0,
-        **_connection_kwargs(settings.llm_base_url, settings.llm_api_key),
+        model or settings.llm_model, model_provider=provider or settings.llm_provider, temperature=0, **connection
     )
 
 

@@ -63,7 +63,7 @@ rag-copilot/
 │   ├── .env.local.example / .env.production.example
 │   ├── config/app.yaml             # service name, top_k, query templates, action/risk catalog, verification thresholds
 │   ├── seed/documents/*.md, seed/incidents.yaml
-│   ├── evals/datasets/*.yaml, evals/fixtures/, evals/run_evals.py
+│   ├── evals/datasets/*.yaml, evals/fixtures/*.json, evals/run_evals.py, evals/record_fixtures.py
 │   ├── src/
 │   │   ├── main.py                 # app factory, mounts /v1 routers
 │   │   ├── core/
@@ -261,6 +261,8 @@ Each phase ends runnable, with tests, lint and docs updated.
 - Dataset rows: question, scenario, expected classification, required tools, expected cause keywords, expected action, approval required.
 - Monitoring/deployment responses replayed from `evals/fixtures/` (recorded from the local stack by a script), so results don't depend on live traffic. Only the LLM varies, which is what we're evaluating.
 - `make eval [provider/model overrides]` → pass-rate report, non-zero exit below threshold. This is also how providers/models are compared.
+- Built: 10 cases (bad release ×2, healthy, card-network outage, prompt injection in logs, unknown service, no service named, two runbook questions, off-topic). Evals run in their own `<db>_eval` database with real embeddings for retrieval; proposals are never approved, so nothing is executed. Two of the four fixtures are derived from recorded ones (card-network outage, injected log line) because the demo service can't produce them live; each fixture's JSON says how it was made.
+- The harness is itself tested with scripted models: an oracle must score 100%, a clueless model must fail the right checks, and any live monitoring/deployment call fails the test.
 
 **Phase 8 — Web UI (after backend is complete)**
 

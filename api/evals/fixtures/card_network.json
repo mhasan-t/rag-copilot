@@ -1,0 +1,840 @@
+{
+  "recorded_at": "2026-10-14T10:11:07.405069Z",
+  "description": "healthy, plus ~3% card-network declines written in.",
+  "evidence": {
+    "service": "payments",
+    "window_minutes": 10,
+    "metrics": {
+      "latency_p99_seconds": {
+        "service": "payments",
+        "metric": "latency_p99_seconds",
+        "window_minutes": 10,
+        "points": [
+          {
+            "timestamp": "2026-10-14T10:01:07.278000Z",
+            "value": 0.09641638360402979
+          },
+          {
+            "timestamp": "2026-10-14T10:01:22.278000Z",
+            "value": 0.09620833333333331
+          },
+          {
+            "timestamp": "2026-10-14T10:01:37.278000Z",
+            "value": 0.09620833333333334
+          },
+          {
+            "timestamp": "2026-10-14T10:01:52.278000Z",
+            "value": 0.09618055555555553
+          },
+          {
+            "timestamp": "2026-10-14T10:02:07.278000Z",
+            "value": 0.09571874999999999
+          },
+          {
+            "timestamp": "2026-10-14T10:02:22.278000Z",
+            "value": 0.096575
+          },
+          {
+            "timestamp": "2026-10-14T10:02:37.278000Z",
+            "value": 0.09597058823529409
+          },
+          {
+            "timestamp": "2026-10-14T10:02:52.278000Z",
+            "value": 0.09543333333333331
+          },
+          {
+            "timestamp": "2026-10-14T10:03:07.278000Z",
+            "value": 0.09473076923076922
+          },
+          {
+            "timestamp": "2026-10-14T10:03:22.278000Z",
+            "value": 0.09543333333333331
+          },
+          {
+            "timestamp": "2026-10-14T10:03:37.278000Z",
+            "value": 0.09571875000000003
+          },
+          {
+            "timestamp": "2026-10-14T10:03:52.278000Z",
+            "value": 0.09543333333333334
+          },
+          {
+            "timestamp": "2026-10-14T10:04:07.278000Z",
+            "value": 0.09510714285714288
+          },
+          {
+            "timestamp": "2026-10-14T10:04:22.278000Z",
+            "value": 0.09619444444444446
+          },
+          {
+            "timestamp": "2026-10-14T10:04:37.278000Z",
+            "value": 0.09702173913043477
+          },
+          {
+            "timestamp": "2026-10-14T10:04:52.278000Z",
+            "value": 0.09714583333333335
+          },
+          {
+            "timestamp": "2026-10-14T10:05:07.278000Z",
+            "value": 0.0973653846153846
+          },
+          {
+            "timestamp": "2026-10-14T10:05:22.278000Z",
+            "value": 0.0970217391304348
+          },
+          {
+            "timestamp": "2026-10-14T10:05:37.278000Z",
+            "value": 0.09657500000000002
+          },
+          {
+            "timestamp": "2026-10-14T10:05:52.278000Z",
+            "value": 0.09639473684210524
+          },
+          {
+            "timestamp": "2026-10-14T10:06:07.278000Z",
+            "value": 0.09618055555555555
+          },
+          {
+            "timestamp": "2026-10-14T10:06:22.278000Z",
+            "value": 0.09619444444444443
+          },
+          {
+            "timestamp": "2026-10-14T10:06:37.278000Z",
+            "value": 0.09597058823529409
+          },
+          {
+            "timestamp": "2026-10-14T10:06:52.278000Z",
+            "value": 0.09701086956521737
+          },
+          {
+            "timestamp": "2026-10-14T10:07:07.278000Z",
+            "value": 0.09638157894736843
+          },
+          {
+            "timestamp": "2026-10-14T10:07:22.278000Z",
+            "value": 0.09619444444444442
+          },
+          {
+            "timestamp": "2026-10-14T10:07:37.278000Z",
+            "value": 0.09672368421052631
+          },
+          {
+            "timestamp": "2026-10-14T10:07:52.278000Z",
+            "value": 0.09671052631578947
+          },
+          {
+            "timestamp": "2026-10-14T10:08:07.278000Z",
+            "value": 0.09688749999999999
+          },
+          {
+            "timestamp": "2026-10-14T10:08:22.278000Z",
+            "value": 0.09715909090909093
+          },
+          {
+            "timestamp": "2026-10-14T10:08:37.278000Z",
+            "value": 0.09673809523809525
+          },
+          {
+            "timestamp": "2026-10-14T10:08:52.278000Z",
+            "value": 0.09571874999999998
+          },
+          {
+            "timestamp": "2026-10-14T10:09:07.278000Z",
+            "value": 0.0963815789473684
+          },
+          {
+            "timestamp": "2026-10-14T10:09:22.278000Z",
+            "value": 0.09713541666666665
+          },
+          {
+            "timestamp": "2026-10-14T10:09:37.278000Z",
+            "value": 0.09702173913043477
+          },
+          {
+            "timestamp": "2026-10-14T10:09:52.278000Z",
+            "value": 0.09639473684210528
+          },
+          {
+            "timestamp": "2026-10-14T10:10:07.278000Z",
+            "value": 0.09619444444444442
+          },
+          {
+            "timestamp": "2026-10-14T10:10:22.278000Z",
+            "value": 0.09597058823529409
+          },
+          {
+            "timestamp": "2026-10-14T10:10:37.278000Z",
+            "value": 0.0954333333333333
+          },
+          {
+            "timestamp": "2026-10-14T10:10:52.278000Z",
+            "value": 0.09571874999999998
+          },
+          {
+            "timestamp": "2026-10-14T10:11:07.278000Z",
+            "value": 0.09598529411764703
+          }
+        ]
+      },
+      "error_ratio": {
+        "service": "payments",
+        "metric": "error_ratio",
+        "window_minutes": 10,
+        "points": [
+          {
+            "timestamp": "2026-10-14T10:01:07.305000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:01:22.305000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:01:37.305000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:01:52.305000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:02:07.305000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:02:22.305000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:02:37.305000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:02:52.305000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:03:07.305000Z",
+            "value": 0.0036496350364963507
+          },
+          {
+            "timestamp": "2026-10-14T10:03:22.305000Z",
+            "value": 0.0036496350364963507
+          },
+          {
+            "timestamp": "2026-10-14T10:03:37.305000Z",
+            "value": 0.007299270072992701
+          },
+          {
+            "timestamp": "2026-10-14T10:03:52.305000Z",
+            "value": 0.007299270072992701
+          },
+          {
+            "timestamp": "2026-10-14T10:04:07.305000Z",
+            "value": 0.0036496350364963507
+          },
+          {
+            "timestamp": "2026-10-14T10:04:22.305000Z",
+            "value": 0.007299270072992701
+          },
+          {
+            "timestamp": "2026-10-14T10:04:37.305000Z",
+            "value": 0.0036496350364963502
+          },
+          {
+            "timestamp": "2026-10-14T10:04:52.305000Z",
+            "value": 0.0036496350364963502
+          },
+          {
+            "timestamp": "2026-10-14T10:05:07.305000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:05:22.305000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:05:37.305000Z",
+            "value": 0.0072992700729927005
+          },
+          {
+            "timestamp": "2026-10-14T10:05:52.305000Z",
+            "value": 0.0072992700729927005
+          },
+          {
+            "timestamp": "2026-10-14T10:06:07.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:06:22.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:06:37.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:06:52.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:07:07.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:07:22.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:07:37.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:07:52.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:08:07.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:08:22.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:08:37.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:08:52.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:09:07.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:09:22.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:09:37.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:09:52.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:10:07.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:10:22.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:10:37.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:10:52.305000Z",
+            "value": 0.03
+          },
+          {
+            "timestamp": "2026-10-14T10:11:07.305000Z",
+            "value": 0.03
+          }
+        ]
+      },
+      "request_rate": {
+        "service": "payments",
+        "metric": "request_rate",
+        "window_minutes": 10,
+        "points": [
+          {
+            "timestamp": "2026-10-14T10:01:07.310000Z",
+            "value": 4.950051781464053
+          },
+          {
+            "timestamp": "2026-10-14T10:01:22.310000Z",
+            "value": 4.96065996765577
+          },
+          {
+            "timestamp": "2026-10-14T10:01:37.310000Z",
+            "value": 4.959938954597482
+          },
+          {
+            "timestamp": "2026-10-14T10:01:52.310000Z",
+            "value": 4.996457057722706
+          },
+          {
+            "timestamp": "2026-10-14T10:02:07.310000Z",
+            "value": 4.97828812296735
+          },
+          {
+            "timestamp": "2026-10-14T10:02:22.310000Z",
+            "value": 4.97828812296735
+          },
+          {
+            "timestamp": "2026-10-14T10:02:37.310000Z",
+            "value": 4.978016787180699
+          },
+          {
+            "timestamp": "2026-10-14T10:02:52.310000Z",
+            "value": 4.978197674418604
+          },
+          {
+            "timestamp": "2026-10-14T10:03:07.310000Z",
+            "value": 4.97828812296735
+          },
+          {
+            "timestamp": "2026-10-14T10:03:22.310000Z",
+            "value": 4.97828812296735
+          },
+          {
+            "timestamp": "2026-10-14T10:03:37.310000Z",
+            "value": 4.978559488334908
+          },
+          {
+            "timestamp": "2026-10-14T10:03:52.310000Z",
+            "value": 4.978469029925323
+          },
+          {
+            "timestamp": "2026-10-14T10:04:07.310000Z",
+            "value": 4.978469029925323
+          },
+          {
+            "timestamp": "2026-10-14T10:04:22.310000Z",
+            "value": 4.978469029925323
+          },
+          {
+            "timestamp": "2026-10-14T10:04:37.310000Z",
+            "value": 4.978197674418604
+          },
+          {
+            "timestamp": "2026-10-14T10:04:52.310000Z",
+            "value": 4.978107229156446
+          },
+          {
+            "timestamp": "2026-10-14T10:05:07.310000Z",
+            "value": 4.978378574802864
+          },
+          {
+            "timestamp": "2026-10-14T10:05:22.310000Z",
+            "value": 4.978107229156447
+          },
+          {
+            "timestamp": "2026-10-14T10:05:37.310000Z",
+            "value": 4.978107229156446
+          },
+          {
+            "timestamp": "2026-10-14T10:05:52.310000Z",
+            "value": 4.978378574802864
+          },
+          {
+            "timestamp": "2026-10-14T10:06:07.310000Z",
+            "value": 4.996457057722706
+          },
+          {
+            "timestamp": "2026-10-14T10:06:22.310000Z",
+            "value": 4.978288122967351
+          },
+          {
+            "timestamp": "2026-10-14T10:06:37.310000Z",
+            "value": 4.978378574802864
+          },
+          {
+            "timestamp": "2026-10-14T10:06:52.310000Z",
+            "value": 4.996638624925051
+          },
+          {
+            "timestamp": "2026-10-14T10:07:07.310000Z",
+            "value": 4.996911000472434
+          },
+          {
+            "timestamp": "2026-10-14T10:07:22.310000Z",
+            "value": 4.978378574802863
+          },
+          {
+            "timestamp": "2026-10-14T10:07:37.310000Z",
+            "value": 4.978469029925324
+          },
+          {
+            "timestamp": "2026-10-14T10:07:52.310000Z",
+            "value": 4.996729413474817
+          },
+          {
+            "timestamp": "2026-10-14T10:08:07.310000Z",
+            "value": 4.978469029925323
+          },
+          {
+            "timestamp": "2026-10-14T10:08:22.310000Z",
+            "value": 4.996702176563469
+          },
+          {
+            "timestamp": "2026-10-14T10:08:37.310000Z",
+            "value": 4.976615901187193
+          },
+          {
+            "timestamp": "2026-10-14T10:08:52.310000Z",
+            "value": 4.976416979774562
+          },
+          {
+            "timestamp": "2026-10-14T10:09:07.310000Z",
+            "value": 4.976317525031477
+          },
+          {
+            "timestamp": "2026-10-14T10:09:22.310000Z",
+            "value": 4.996638624925051
+          },
+          {
+            "timestamp": "2026-10-14T10:09:37.310000Z",
+            "value": 4.9791023078320915
+          },
+          {
+            "timestamp": "2026-10-14T10:09:52.310000Z",
+            "value": 4.97955474784189
+          },
+          {
+            "timestamp": "2026-10-14T10:10:07.310000Z",
+            "value": 4.980369347099026
+          },
+          {
+            "timestamp": "2026-10-14T10:10:22.310000Z",
+            "value": 4.9803693470990265
+          },
+          {
+            "timestamp": "2026-10-14T10:10:37.310000Z",
+            "value": 4.9803693470990265
+          },
+          {
+            "timestamp": "2026-10-14T10:10:52.310000Z",
+            "value": 4.9803693470990265
+          },
+          {
+            "timestamp": "2026-10-14T10:11:07.310000Z",
+            "value": 4.96219281663516
+          }
+        ]
+      }
+    },
+    "error_logs": [
+      {
+        "timestamp": "2026-10-14T10:11:07.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:11:00.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:10:53.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:10:46.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:10:39.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:10:32.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:10:25.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:10:18.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:10:11.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:10:04.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:09:57.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:09:50.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:09:43.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:09:36.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:09:29.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:09:22.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:09:15.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:09:08.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:09:01.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:08:54.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:08:47.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:08:40.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:08:33.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:08:26.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:08:19.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:08:12.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:08:05.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:07:58.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:07:51.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:07:44.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:07:37.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:07:30.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:07:23.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:07:16.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:07:09.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:07:02.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:06:55.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:06:48.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:06:41.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:06:34.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:06:27.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:06:20.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:06:13.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:06:06.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:05:59.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:05:52.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:05:45.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:05:38.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:05:31.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      },
+      {
+        "timestamp": "2026-10-14T10:05:24.305000Z",
+        "severity": "ERROR",
+        "message": "card network declined request: issuer unavailable",
+        "trace_id": null
+      }
+    ],
+    "slow_traces": [],
+    "deployment": {
+      "name": "payments",
+      "version": "v1",
+      "replicas": 1,
+      "history": [
+        {
+          "revision": 1,
+          "version": "v1",
+          "deployed_at": "2026-10-14T10:00:07.182249Z"
+        }
+      ]
+    },
+    "incidents": [],
+    "unavailable": {}
+  }
+}

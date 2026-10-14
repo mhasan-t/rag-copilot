@@ -15,6 +15,7 @@ from src.core.logging import logger
 from src.modules.auth.schemas import UserRead
 from src.modules.copilot.copilot_graph import CopilotGraph
 from src.modules.copilot.copilot_llm import CopilotLLM
+from src.modules.copilot.evidence_service import EvidenceBackends
 from src.modules.copilot.models import CopilotRun
 from src.modules.copilot.run_policy import RunPolicy
 from src.modules.copilot.run_query import RunQuery
@@ -32,16 +33,27 @@ _runs = metrics.get_meter(__name__).create_counter(
 
 
 class CopilotModels:
-    """The models a graph needs; passed through from the request's dependencies."""
+    """The models a graph needs; passed through from the request's dependencies.
 
-    def __init__(self, chat_model: BaseChatModel, classifier_model: BaseChatModel, embeddings: Embeddings):
+    `evidence_backends` defaults to the live monitoring and deployment services; the evals replay fixtures instead.
+    """
+
+    def __init__(
+        self,
+        chat_model: BaseChatModel,
+        classifier_model: BaseChatModel,
+        embeddings: Embeddings,
+        evidence_backends: EvidenceBackends | None = None,
+    ):
         self.chat_model = chat_model
         self.classifier_model = classifier_model
         self.embeddings = embeddings
+        self.evidence_backends = evidence_backends
 
     def graph(self, run_id: uuid.UUID) -> CopilotGraph:
         steps = RunStepService(run_id)
-        return CopilotGraph(run_id, CopilotLLM(self.chat_model, self.classifier_model, steps), self.embeddings, steps)
+        llm = CopilotLLM(self.chat_model, self.classifier_model, steps)
+        return CopilotGraph(run_id, llm, self.embeddings, steps, self.evidence_backends)
 
 
 class RunService:

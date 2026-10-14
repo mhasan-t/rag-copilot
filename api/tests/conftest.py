@@ -1,17 +1,15 @@
-import asyncio
 import os
 from collections.abc import AsyncIterator, Iterator
 from datetime import UTC, datetime
 
-import asyncpg
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import make_url, text
+from sqlalchemy import text
+
+from src.core.scratch_database import recreate_database, use_scratch_database
 
 # Point the app at a separate database before anything in src reads settings, so tests never touch dev data.
-_dev_url = make_url(os.environ["DATABASE_URL"])
-_test_url = _dev_url.set(database=f"{_dev_url.database}_test")
-os.environ["DATABASE_URL"] = _test_url.render_as_string(hide_password=False)
+_dev_url = use_scratch_database("test")
 # Tests capture telemetry in memory (below) instead of exporting it to the dev stack.
 os.environ["TELEMETRY_TRACES_ENABLED"] = "false"
 
@@ -41,18 +39,7 @@ from tests.telemetry_capture import METRICS, SPANS  # noqa: E402, F401  installs
 @pytest.fixture(scope="session", autouse=True)
 async def _test_database() -> None:
     """Recreates the test database once per session and builds it with the real migrations."""
-    admin = await asyncpg.connect(_dev_url.set(drivername="postgresql").render_as_string(hide_password=False))
-    try:
-        await admin.execute(f'DROP DATABASE IF EXISTS "{_test_url.database}" WITH (FORCE)')
-        await admin.execute(f'CREATE DATABASE "{_test_url.database}"')
-    finally:
-        await admin.close()
-
-    migration = await asyncio.create_subprocess_exec(
-        "alembic", "upgrade", "head", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
-    )
-    output, _ = await migration.communicate()
-    assert migration.returncode == 0, output.decode()
+    await recreate_database(_dev_url)
 
 
 @pytest.fixture(autouse=True)

@@ -3,7 +3,7 @@ DEV_COMPOSE = docker compose --env-file .env -f docker-compose.dev.yaml
 # Everything after the first Make goal is treated as positional arguments.
 ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
-.PHONY: prepare-env compose up up-f down clean logs migrate revision test lint format createsuperuser seed demo-deploy demo-rollback psql redis-cli app_bash python
+.PHONY: prepare-env compose up up-f down clean logs migrate revision test lint format createsuperuser eval eval-record seed demo-deploy demo-rollback psql redis-cli app_bash python
 
 # Create local configuration once while preserving every developer override.
 prepare-env:
@@ -48,6 +48,14 @@ format:
 # Usage: make createsuperuser admin@example.com (prompts for the password).
 createsuperuser:
 	$(DEV_COMPOSE) exec api python -m src.modules.auth.cli $(ARGS)
+
+# Score the copilot against a real LLM. Usage: make eval [provider=openai] [model=gpt-5-mini] [case=healthy-service]
+eval:
+	$(DEV_COMPOSE) exec api python -m evals.run_evals $(if $(provider),--provider $(provider)) $(if $(model),--model $(model)) $(if $(case),--case $(case))
+
+# Re-record the evals' evidence fixtures from the live stack (~15 min; restart the payments container first).
+eval-record:
+	$(DEV_COMPOSE) exec api python -m evals.record_fixtures
 
 # Load example incidents and documents (documents need the embedding provider); safe to re-run.
 seed:

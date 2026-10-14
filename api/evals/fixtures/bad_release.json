@@ -1,0 +1,966 @@
+{
+  "recorded_at": "2026-10-14T10:14:07.539822Z",
+  "description": "Recorded live: demo v2 deployed 3 min before recording.",
+  "evidence": {
+    "service": "payments",
+    "window_minutes": 10,
+    "metrics": {
+      "latency_p99_seconds": {
+        "service": "payments",
+        "metric": "latency_p99_seconds",
+        "window_minutes": 10,
+        "points": [
+          {
+            "timestamp": "2026-10-14T10:04:07.504000Z",
+            "value": 0.09510714285714288
+          },
+          {
+            "timestamp": "2026-10-14T10:04:22.504000Z",
+            "value": 0.09619444444444446
+          },
+          {
+            "timestamp": "2026-10-14T10:04:37.504000Z",
+            "value": 0.09702173913043477
+          },
+          {
+            "timestamp": "2026-10-14T10:04:52.504000Z",
+            "value": 0.09714583333333335
+          },
+          {
+            "timestamp": "2026-10-14T10:05:07.504000Z",
+            "value": 0.0973653846153846
+          },
+          {
+            "timestamp": "2026-10-14T10:05:22.504000Z",
+            "value": 0.0970217391304348
+          },
+          {
+            "timestamp": "2026-10-14T10:05:37.504000Z",
+            "value": 0.09657500000000002
+          },
+          {
+            "timestamp": "2026-10-14T10:05:52.504000Z",
+            "value": 0.09639473684210524
+          },
+          {
+            "timestamp": "2026-10-14T10:06:07.504000Z",
+            "value": 0.09618055555555555
+          },
+          {
+            "timestamp": "2026-10-14T10:06:22.504000Z",
+            "value": 0.09619444444444443
+          },
+          {
+            "timestamp": "2026-10-14T10:06:37.504000Z",
+            "value": 0.09597058823529409
+          },
+          {
+            "timestamp": "2026-10-14T10:06:52.504000Z",
+            "value": 0.09701086956521739
+          },
+          {
+            "timestamp": "2026-10-14T10:07:07.504000Z",
+            "value": 0.09638157894736843
+          },
+          {
+            "timestamp": "2026-10-14T10:07:22.504000Z",
+            "value": 0.09619444444444442
+          },
+          {
+            "timestamp": "2026-10-14T10:07:37.504000Z",
+            "value": 0.09673809523809525
+          },
+          {
+            "timestamp": "2026-10-14T10:07:52.504000Z",
+            "value": 0.09672619047619048
+          },
+          {
+            "timestamp": "2026-10-14T10:08:07.504000Z",
+            "value": 0.09714583333333335
+          },
+          {
+            "timestamp": "2026-10-14T10:08:22.504000Z",
+            "value": 0.09688636363636366
+          },
+          {
+            "timestamp": "2026-10-14T10:08:37.504000Z",
+            "value": 0.09619444444444443
+          },
+          {
+            "timestamp": "2026-10-14T10:08:52.504000Z",
+            "value": 0.09597058823529411
+          },
+          {
+            "timestamp": "2026-10-14T10:09:07.504000Z",
+            "value": 0.09639473684210526
+          },
+          {
+            "timestamp": "2026-10-14T10:09:22.504000Z",
+            "value": 0.09688636363636366
+          },
+          {
+            "timestamp": "2026-10-14T10:09:37.504000Z",
+            "value": 0.09702173913043476
+          },
+          {
+            "timestamp": "2026-10-14T10:09:52.504000Z",
+            "value": 0.09619444444444447
+          },
+          {
+            "timestamp": "2026-10-14T10:10:07.504000Z",
+            "value": 0.09595588235294121
+          },
+          {
+            "timestamp": "2026-10-14T10:10:22.504000Z",
+            "value": 0.09597058823529409
+          },
+          {
+            "timestamp": "2026-10-14T10:10:37.504000Z",
+            "value": 0.09571874999999996
+          },
+          {
+            "timestamp": "2026-10-14T10:10:52.504000Z",
+            "value": 0.09597058823529409
+          },
+          {
+            "timestamp": "2026-10-14T10:11:07.504000Z",
+            "value": 0.09597058823529409
+          },
+          {
+            "timestamp": "2026-10-14T10:11:22.504000Z",
+            "value": 2.3875000000000006
+          },
+          {
+            "timestamp": "2026-10-14T10:11:37.504000Z",
+            "value": 2.437692307692308
+          },
+          {
+            "timestamp": "2026-10-14T10:11:52.504000Z",
+            "value": 2.45990099009901
+          },
+          {
+            "timestamp": "2026-10-14T10:12:07.504000Z",
+            "value": 2.4685227272727275
+          },
+          {
+            "timestamp": "2026-10-14T10:12:22.504000Z",
+            "value": 2.467142857142857
+          },
+          {
+            "timestamp": "2026-10-14T10:12:37.504000Z",
+            "value": 2.469222222222222
+          },
+          {
+            "timestamp": "2026-10-14T10:12:52.504000Z",
+            "value": 2.468625954198473
+          },
+          {
+            "timestamp": "2026-10-14T10:13:07.504000Z",
+            "value": 2.4669758064516127
+          },
+          {
+            "timestamp": "2026-10-14T10:13:22.504000Z",
+            "value": 2.4688461538461537
+          },
+          {
+            "timestamp": "2026-10-14T10:13:37.504000Z",
+            "value": 2.46851145038168
+          },
+          {
+            "timestamp": "2026-10-14T10:13:52.504000Z",
+            "value": 2.469216417910448
+          },
+          {
+            "timestamp": "2026-10-14T10:14:07.504000Z",
+            "value": 2.4688636363636363
+          }
+        ]
+      },
+      "error_ratio": {
+        "service": "payments",
+        "metric": "error_ratio",
+        "window_minutes": 10,
+        "points": [
+          {
+            "timestamp": "2026-10-14T10:04:07.507000Z",
+            "value": 0.0036496350364963507
+          },
+          {
+            "timestamp": "2026-10-14T10:04:22.507000Z",
+            "value": 0.007299270072992701
+          },
+          {
+            "timestamp": "2026-10-14T10:04:37.507000Z",
+            "value": 0.0036496350364963502
+          },
+          {
+            "timestamp": "2026-10-14T10:04:52.507000Z",
+            "value": 0.0036496350364963502
+          },
+          {
+            "timestamp": "2026-10-14T10:05:07.507000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:05:22.507000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:05:37.507000Z",
+            "value": 0.0072992700729927005
+          },
+          {
+            "timestamp": "2026-10-14T10:05:52.507000Z",
+            "value": 0.0072992700729927005
+          },
+          {
+            "timestamp": "2026-10-14T10:06:07.507000Z",
+            "value": 0.014545454545454544
+          },
+          {
+            "timestamp": "2026-10-14T10:06:22.507000Z",
+            "value": 0.014598540145985403
+          },
+          {
+            "timestamp": "2026-10-14T10:06:37.507000Z",
+            "value": 0.01094890510948905
+          },
+          {
+            "timestamp": "2026-10-14T10:06:52.507000Z",
+            "value": 0.010909090909090908
+          },
+          {
+            "timestamp": "2026-10-14T10:07:07.507000Z",
+            "value": 0.0036363636363636364
+          },
+          {
+            "timestamp": "2026-10-14T10:07:22.507000Z",
+            "value": 0.0036496350364963502
+          },
+          {
+            "timestamp": "2026-10-14T10:07:37.507000Z",
+            "value": 0.0036496350364963507
+          },
+          {
+            "timestamp": "2026-10-14T10:07:52.507000Z",
+            "value": 0.003636363636363636
+          },
+          {
+            "timestamp": "2026-10-14T10:08:07.507000Z",
+            "value": 0.0036496350364963507
+          },
+          {
+            "timestamp": "2026-10-14T10:08:22.507000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:08:37.507000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:08:52.507000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:09:07.507000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:09:22.507000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:09:37.507000Z",
+            "value": 0.0036496350364963502
+          },
+          {
+            "timestamp": "2026-10-14T10:09:52.507000Z",
+            "value": 0.0036496350364963507
+          },
+          {
+            "timestamp": "2026-10-14T10:10:07.507000Z",
+            "value": 0.0036363636363636364
+          },
+          {
+            "timestamp": "2026-10-14T10:10:22.507000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:10:37.507000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:10:52.507000Z",
+            "value": 0.0
+          },
+          {
+            "timestamp": "2026-10-14T10:11:07.507000Z",
+            "value": 0.0036496350364963507
+          },
+          {
+            "timestamp": "2026-10-14T10:11:22.507000Z",
+            "value": 0.02592592592592592
+          },
+          {
+            "timestamp": "2026-10-14T10:11:37.507000Z",
+            "value": 0.040740740740740744
+          },
+          {
+            "timestamp": "2026-10-14T10:11:52.507000Z",
+            "value": 0.05925925925925926
+          },
+          {
+            "timestamp": "2026-10-14T10:12:07.507000Z",
+            "value": 0.06498194945848375
+          },
+          {
+            "timestamp": "2026-10-14T10:12:22.507000Z",
+            "value": 0.05797101449275362
+          },
+          {
+            "timestamp": "2026-10-14T10:12:37.507000Z",
+            "value": 0.06498194945848375
+          },
+          {
+            "timestamp": "2026-10-14T10:12:52.507000Z",
+            "value": 0.05474452554744525
+          },
+          {
+            "timestamp": "2026-10-14T10:13:07.507000Z",
+            "value": 0.04761904761904762
+          },
+          {
+            "timestamp": "2026-10-14T10:13:22.507000Z",
+            "value": 0.04814814814814815
+          },
+          {
+            "timestamp": "2026-10-14T10:13:37.507000Z",
+            "value": 0.04363636363636363
+          },
+          {
+            "timestamp": "2026-10-14T10:13:52.507000Z",
+            "value": 0.06181818181818182
+          },
+          {
+            "timestamp": "2026-10-14T10:14:07.507000Z",
+            "value": 0.08029197080291971
+          }
+        ]
+      },
+      "request_rate": {
+        "service": "payments",
+        "metric": "request_rate",
+        "window_minutes": 10,
+        "points": [
+          {
+            "timestamp": "2026-10-14T10:04:07.508000Z",
+            "value": 4.978469029925322
+          },
+          {
+            "timestamp": "2026-10-14T10:04:22.508000Z",
+            "value": 4.978469029925323
+          },
+          {
+            "timestamp": "2026-10-14T10:04:37.508000Z",
+            "value": 4.978197674418604
+          },
+          {
+            "timestamp": "2026-10-14T10:04:52.508000Z",
+            "value": 4.978107229156446
+          },
+          {
+            "timestamp": "2026-10-14T10:05:07.508000Z",
+            "value": 4.978378574802864
+          },
+          {
+            "timestamp": "2026-10-14T10:05:22.508000Z",
+            "value": 4.978107229156447
+          },
+          {
+            "timestamp": "2026-10-14T10:05:37.508000Z",
+            "value": 4.978107229156446
+          },
+          {
+            "timestamp": "2026-10-14T10:05:52.508000Z",
+            "value": 4.978378574802864
+          },
+          {
+            "timestamp": "2026-10-14T10:06:07.508000Z",
+            "value": 4.996457057722706
+          },
+          {
+            "timestamp": "2026-10-14T10:06:22.508000Z",
+            "value": 4.978288122967351
+          },
+          {
+            "timestamp": "2026-10-14T10:06:37.508000Z",
+            "value": 4.978378574802864
+          },
+          {
+            "timestamp": "2026-10-14T10:06:52.508000Z",
+            "value": 4.996638624925051
+          },
+          {
+            "timestamp": "2026-10-14T10:07:07.508000Z",
+            "value": 4.996911000472434
+          },
+          {
+            "timestamp": "2026-10-14T10:07:22.508000Z",
+            "value": 4.978378574802863
+          },
+          {
+            "timestamp": "2026-10-14T10:07:37.508000Z",
+            "value": 4.978469029925324
+          },
+          {
+            "timestamp": "2026-10-14T10:07:52.508000Z",
+            "value": 4.996729413474817
+          },
+          {
+            "timestamp": "2026-10-14T10:08:07.508000Z",
+            "value": 4.978469029925323
+          },
+          {
+            "timestamp": "2026-10-14T10:08:22.508000Z",
+            "value": 4.978559488334908
+          },
+          {
+            "timestamp": "2026-10-14T10:08:37.508000Z",
+            "value": 4.978197674418604
+          },
+          {
+            "timestamp": "2026-10-14T10:08:52.508000Z",
+            "value": 4.97828812296735
+          },
+          {
+            "timestamp": "2026-10-14T10:09:07.508000Z",
+            "value": 4.978288122967351
+          },
+          {
+            "timestamp": "2026-10-14T10:09:22.508000Z",
+            "value": 4.978559488334908
+          },
+          {
+            "timestamp": "2026-10-14T10:09:37.508000Z",
+            "value": 4.979102307832092
+          },
+          {
+            "timestamp": "2026-10-14T10:09:52.508000Z",
+            "value": 4.979735746869491
+          },
+          {
+            "timestamp": "2026-10-14T10:10:07.508000Z",
+            "value": 4.998545877562892
+          },
+          {
+            "timestamp": "2026-10-14T10:10:22.508000Z",
+            "value": 4.980369347099026
+          },
+          {
+            "timestamp": "2026-10-14T10:10:37.508000Z",
+            "value": 4.9803693470990265
+          },
+          {
+            "timestamp": "2026-10-14T10:10:52.508000Z",
+            "value": 4.980369347099026
+          },
+          {
+            "timestamp": "2026-10-14T10:11:07.508000Z",
+            "value": 4.9803693470990265
+          },
+          {
+            "timestamp": "2026-10-14T10:11:22.508000Z",
+            "value": 4.9077524311551395
+          },
+          {
+            "timestamp": "2026-10-14T10:11:37.508000Z",
+            "value": 4.907663225243566
+          },
+          {
+            "timestamp": "2026-10-14T10:11:52.508000Z",
+            "value": 4.907663225243566
+          },
+          {
+            "timestamp": "2026-10-14T10:12:07.508000Z",
+            "value": 5.034898938490621
+          },
+          {
+            "timestamp": "2026-10-14T10:12:22.508000Z",
+            "value": 5.016813596291921
+          },
+          {
+            "timestamp": "2026-10-14T10:12:37.508000Z",
+            "value": 5.034990457148051
+          },
+          {
+            "timestamp": "2026-10-14T10:12:52.508000Z",
+            "value": 4.9803693470990265
+          },
+          {
+            "timestamp": "2026-10-14T10:13:07.508000Z",
+            "value": 4.962192816635161
+          },
+          {
+            "timestamp": "2026-10-14T10:13:22.508000Z",
+            "value": 4.907663225243566
+          },
+          {
+            "timestamp": "2026-10-14T10:13:37.508000Z",
+            "value": 4.998455022992894
+          },
+          {
+            "timestamp": "2026-10-14T10:13:52.508000Z",
+            "value": 4.998545877562892
+          },
+          {
+            "timestamp": "2026-10-14T10:14:07.508000Z",
+            "value": 4.979826251317655
+          }
+        ]
+      }
+    },
+    "error_logs": [
+      {
+        "timestamp": "2026-10-14T10:14:04.173292Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "6cbe4d930f143ca0c71435ca128daec6"
+      },
+      {
+        "timestamp": "2026-10-14T10:14:00.620852Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "ac6c9ab7d64127697ce98b62f007dbca"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:59.802841Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "35d10a0745beefa2a6e20d8f00bdcbc0"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:57.991237Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "a267fc459360d814a179d3ac9f31f763"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:57.111759Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "14f80149b8717070d0da067b97eafd8b"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:55.613715Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "625aa0f8df953d4bcde724979b3c28b3"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:54.428215Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "aaa97785662475b5b3b5479ffc10c4d1"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:53.427205Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "c529c699d6b49f1850d667e80b026cf2"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:47.563655Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "f5a8ae5a70edc43b641ad45ba79f2456"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:46.431282Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "d80a053ea0f83dd9c3785c1037f55ab2"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:45.036922Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "32cd012d15cf46fee18e0c0c0e99abc8"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:43.771795Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "4890a9605ff38d7bb0ef420bc1602afe"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:40.653737Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "687038cf9d9b93849de492f4da89f77d"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:39.892261Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "9bd7f81a51265a80e5b3aec2a5dff9c3"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:36.793385Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "befc1830b5c67dae726898cde325525f"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:31.649250Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "bded76cfbe4a440a21bda7dfbfa7b50c"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:29.086847Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "175e73cb1e61d4d9486de8b482ba062c"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:28.608755Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "33ccc2df622071e18fe2b3de2adc795e"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:24.767673Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "99e468a47b62024470ca901e236c839a"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:21.861706Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "a3850e2746f6b776a58315f67c6c8975"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:19.561886Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "00c6aee65681bf65d1f98fdd8f8e6d86"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:19.117128Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "fc1a6344f12593127c6dca1a6ec68460"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:09.394836Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "75bf4939aeb39761f6759255a3317268"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:05.828785Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "e5449b67cdee4f2fc8e29a7eea86e503"
+      },
+      {
+        "timestamp": "2026-10-14T10:13:01.393489Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "19527fa096e62d2f4476540684d9981c"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:49.440701Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "dc6245db475c17d2ae2dadd0093c20e6"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:40.155250Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "0fd6b07a688016e1e3e6d9bc1963315b"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:38.287738Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "5e4b44d6b5fecda309a6f19747529219"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:35.215433Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "92b48f3bf04c3d75bb2ec9fa6ae4ed25"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:29.445410Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "2def379fa2c81b4fbb5d38c5216f4e1b"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:28.934617Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "75ee48600e22ae24c0d0d52bf0d8fb30"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:28.175103Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "ced199cebb2529e7637a757c82b8a709"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:26.373450Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "5bd9c27285fa198cfe503890f24bb016"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:23.651584Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "68db12e180f6709563e342030f125443"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:18.219890Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "5819db1742f73368947b9b1e2613d9e2"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:15.271568Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "6851fe9935faebcceb223af667b0be92"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:11.265090Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "04429090bf33d134bc3b65f0ff4be157"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:06.830903Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "d0f47858ea2c110fb3958aa1446697b6"
+      },
+      {
+        "timestamp": "2026-10-14T10:12:01.538667Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "64934f04726352297c9cda82ec986c81"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:59.174166Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "b5fbb62bccd6d3f99ed9b08e9ae8463a"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:54.088039Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "26fcd74ddf386baa7b59da89e8c00494"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:53.908608Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "a1f57306dd599eebc1e7d030706880a1"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:47.352083Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "02c1f41b172c38fa5a3b2e55358cbac0"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:45.513879Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "7ad706e9db17c0b9e41054e823b17ed1"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:43.383520Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "4e1ee19ac58b03dfa0069a6e323304a3"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:42.475661Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "3f6c1599ce18d26dd18e2d617cc7c15d"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:39.239615Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "f19e8e34a03848638450951018e2455e"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:36.905326Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "762f1d3f34a293538f06d4912a7c9f1f"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:28.641026Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "b972d7479c77d71307e0069faf6cd562"
+      },
+      {
+        "timestamp": "2026-10-14T10:11:27.707782Z",
+        "severity": "ERROR",
+        "message": "ledger-db query timed out: connection pool exhausted (size=10)",
+        "trace_id": "98c254fed4e1fb399b3da521ddcb67fc"
+      }
+    ],
+    "slow_traces": [
+      {
+        "trace_id": "7a866604db0ce4a3d59dd26ca85c81cc",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:31.957164Z",
+        "duration_ms": 1790
+      },
+      {
+        "trace_id": "5eb02927ce3ead6321248bff87ad3d34",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:30.751995Z",
+        "duration_ms": 1785
+      },
+      {
+        "trace_id": "a66daba4e843dd3b949e892b7d49c929",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:33.764465Z",
+        "duration_ms": 1727
+      },
+      {
+        "trace_id": "2c4232c54771c72b93df4fb5a7ffbdc9",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:34.769806Z",
+        "duration_ms": 1637
+      },
+      {
+        "trace_id": "8528d1ff3df642b39a929a0718b3af31",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:34.367952Z",
+        "duration_ms": 1552
+      },
+      {
+        "trace_id": "38e77ad4bf250b0595bef711684d7259",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:31.354564Z",
+        "duration_ms": 1396
+      },
+      {
+        "trace_id": "9fb7eb38a8c5f61cbb2a35e564bfccee",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:32.961401Z",
+        "duration_ms": 1366
+      },
+      {
+        "trace_id": "46b2d351fb9c23105f00992d6bddeaa",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:35.572693Z",
+        "duration_ms": 1257
+      },
+      {
+        "trace_id": "4f8bef3f54ed7885f1701c12acf13151",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:35.974900Z",
+        "duration_ms": 1245
+      },
+      {
+        "trace_id": "48beb2e8c508ceac7ab20057ebf3bbdd",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:33.965539Z",
+        "duration_ms": 1169
+      },
+      {
+        "trace_id": "7bd956b5657f4a76d96df74789282a25",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:31.756184Z",
+        "duration_ms": 1094
+      },
+      {
+        "trace_id": "83c6e0871674c5832e8146fc84619dd",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:32.158086Z",
+        "duration_ms": 1080
+      },
+      {
+        "trace_id": "a052bd306047c02fefab24b9b0145918",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:33.363132Z",
+        "duration_ms": 1011
+      },
+      {
+        "trace_id": "bb6d47080bd487f8eaaccc69963d4c78",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:34.166491Z",
+        "duration_ms": 1002
+      },
+      {
+        "trace_id": "1a9f7db35eaa85469770004770f20c22",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:32.559950Z",
+        "duration_ms": 979
+      },
+      {
+        "trace_id": "97c403990b53c2def5e96bd5afbfd190",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:32.760207Z",
+        "duration_ms": 937
+      },
+      {
+        "trace_id": "64f397e529c6c97d22e8e09b135f2687",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:34.568899Z",
+        "duration_ms": 912
+      },
+      {
+        "trace_id": "19b3f2a51a62f092f260c29f2c442e99",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:33.563662Z",
+        "duration_ms": 766
+      },
+      {
+        "trace_id": "b23db68b5cc9abf2de836c640f662325",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:35.773648Z",
+        "duration_ms": 693
+      },
+      {
+        "trace_id": "befc1830b5c67dae726898cde325525f",
+        "root_name": "POST /payments",
+        "started_at": "2026-10-14T10:13:36.175946Z",
+        "duration_ms": 617
+      }
+    ],
+    "deployment": {
+      "name": "payments",
+      "version": "v2",
+      "replicas": 1,
+      "history": [
+        {
+          "revision": 2,
+          "version": "v2",
+          "deployed_at": "2026-10-14T10:11:07.406304Z"
+        },
+        {
+          "revision": 1,
+          "version": "v1",
+          "deployed_at": "2026-10-14T10:00:07.182249Z"
+        }
+      ]
+    },
+    "incidents": [],
+    "unavailable": {}
+  }
+}

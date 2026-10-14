@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import Awaitable, Callable
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Protocol
 
 from src.core.config import MetricName
 from src.core.database import session_factory
@@ -8,19 +9,40 @@ from src.core.exceptions import AppError
 from src.modules.copilot.run_step_service import RunStepService
 from src.modules.copilot.schemas import Evidence
 from src.modules.deployments.deployment_service import DeploymentService
+from src.modules.deployments.schemas import DeploymentState
 from src.modules.incidents.incident_service import IncidentService
 from src.modules.monitoring.monitoring_service import MonitoringService
+from src.modules.monitoring.schemas import LogEntry, MetricSeries, TraceSummary
 
 NODE = "gather_evidence"
+
+
+class MonitoringBackend(Protocol):
+    async def get_metric(self, service: str, metric: MetricName, window_minutes: int) -> MetricSeries: ...
+    async def get_error_logs(self, service: str, window_minutes: int) -> list[LogEntry]: ...
+    async def get_slow_traces(self, service: str, window_minutes: int) -> list[TraceSummary]: ...
+
+
+class DeploymentBackend(Protocol):
+    async def get_deployment(self, service: str) -> DeploymentState: ...
+
+
+@dataclass
+class EvidenceBackends:
+    """Where live evidence comes from: the real services, or recorded fixtures for the evals."""
+
+    monitoring: MonitoringBackend = field(default_factory=MonitoringService)
+    deployments: DeploymentBackend = field(default_factory=DeploymentService)
 
 
 class EvidenceService:
     """Queries every evidence source for a service in parallel, recording each query as a tool step."""
 
-    def __init__(self, steps: RunStepService):
+    def __init__(self, steps: RunStepService, backends: EvidenceBackends | None = None):
         self._steps = steps
-        self._monitoring = MonitoringService()
-        self._deployments = DeploymentService()
+        backends = backends or EvidenceBackends()
+        self._monitoring = backends.monitoring
+        self._deployments = backends.deployments
 
     async def gather(self, service: str, window_minutes: int) -> Evidence:
         evidence = Evidence(service=service, window_minutes=window_minutes)

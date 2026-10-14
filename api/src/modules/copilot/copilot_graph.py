@@ -28,7 +28,7 @@ from src.core.validation import SERVICE_NAME_PATTERN
 from src.modules.copilot import prompts
 from src.modules.copilot.checkpointer import get_checkpointer
 from src.modules.copilot.copilot_llm import CopilotLLM
-from src.modules.copilot.evidence_service import EvidenceService
+from src.modules.copilot.evidence_service import EvidenceBackends, EvidenceService
 from src.modules.copilot.run_step_service import RunStepService
 from src.modules.copilot.schemas import Classification, Diagnosis, Evidence
 from src.modules.knowledge.knowledge_service import KnowledgeService
@@ -58,13 +58,20 @@ STATE_TYPES = (Classification, SearchHit, Evidence, Diagnosis, RemediationRead)
 
 
 class CopilotGraph:
-    def __init__(self, run_id: uuid.UUID, llm: CopilotLLM, embeddings: Embeddings, steps: RunStepService):
+    def __init__(
+        self,
+        run_id: uuid.UUID,
+        llm: CopilotLLM,
+        embeddings: Embeddings,
+        steps: RunStepService,
+        evidence_backends: EvidenceBackends | None = None,
+    ):
         self._config = {"configurable": {"thread_id": str(run_id)}}
         self._run_id = run_id
         self._llm = llm
         self._embeddings = embeddings
         self._steps = steps
-        self._evidence = EvidenceService(steps)
+        self._evidence = EvidenceService(steps, evidence_backends)
 
     async def run(self, question: str) -> dict[str, Any]:
         """Runs until the end or until it pauses for approval (then the result has an "__interrupt__" key)."""
