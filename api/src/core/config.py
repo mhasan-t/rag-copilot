@@ -58,6 +58,19 @@ class MetricName(StrEnum):
     REQUEST_RATE = "request_rate"
 
 
+class ActionName(StrEnum):
+    """Remediation actions the copilot can propose; each needs an entry in remediation.actions."""
+
+    ROLLBACK_DEPLOYMENT = "rollback_deployment"
+    RESTART_DEPLOYMENT = "restart_deployment"
+    SCALE_DEPLOYMENT = "scale_deployment"
+
+
+class RiskLevel(StrEnum):
+    LOW = "low"
+    HIGH = "high"
+
+
 class ServiceConfig(BaseModel):
     name: str
     title: str
@@ -89,6 +102,29 @@ class CopilotConfig(BaseModel):
     llm_timeout_seconds: float
 
 
+class ActionConfig(BaseModel):
+    risk: RiskLevel
+    description: str
+
+
+class VerificationConfig(BaseModel):
+    thresholds: dict[MetricName, float]
+    timeout_seconds: float
+    poll_seconds: float
+
+
+class RemediationConfig(BaseModel):
+    actions: dict[ActionName, ActionConfig]
+    max_replicas: int
+    verification: VerificationConfig
+
+    @model_validator(mode="after")
+    def _require_every_action(self) -> Self:
+        if missing := set(ActionName) - set(self.actions):
+            raise ValueError(f"remediation.actions is missing {sorted(missing)}")
+        return self
+
+
 class AppConfig(BaseModel):
     """Deployment-independent configuration from config/app.yaml."""
 
@@ -97,6 +133,7 @@ class AppConfig(BaseModel):
     monitoring: MonitoringConfig
     knowledge: KnowledgeConfig
     copilot: CopilotConfig
+    remediation: RemediationConfig
     version: str
 
 

@@ -1,9 +1,14 @@
 from functools import cache
+from typing import Annotated
 
+from fastapi import Depends
+from langchain_core.embeddings import Embeddings
 from langchain_core.language_models import BaseChatModel
 
 from src.core.config import settings
 from src.core.llm import build_chat_model
+from src.modules.copilot.run_service import CopilotModels
+from src.modules.knowledge.knowledge_dependencies import get_embeddings
 
 
 @cache
@@ -16,6 +21,14 @@ def get_chat_model() -> BaseChatModel:
 def get_classifier_model() -> BaseChatModel:
     """LLM_CLASSIFIER_MODEL if set (a smaller, faster model is enough for routing), else the main model."""
     return build_chat_model(settings.llm_classifier_model) if settings.llm_classifier_model else get_chat_model()
+
+
+def get_copilot_models(
+    chat_model: Annotated[BaseChatModel, Depends(get_chat_model)],
+    classifier_model: Annotated[BaseChatModel, Depends(get_classifier_model)],
+    embeddings: Annotated[Embeddings, Depends(get_embeddings)],
+) -> CopilotModels:
+    return CopilotModels(chat_model, classifier_model, embeddings)
 
 
 def verify_chat_models() -> None:

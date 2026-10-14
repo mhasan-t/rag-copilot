@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 SERVICE_NAME = "payments"
 
@@ -51,8 +51,13 @@ class DeployRequest(BaseModel):
     version: str
 
 
+class ScaleRequest(BaseModel):
+    replicas: int = Field(ge=1, le=20)
+
+
 # In-memory on purpose: restarting the container is a "fresh install" of v1.
 _history = [Revision(revision=1, version="v1", deployed_at=datetime.now(UTC))]
+_replicas = 1
 
 app = FastAPI(title="Demo payments service")
 
@@ -103,6 +108,24 @@ async def rollback(name: str) -> Deployment:
     return _roll_out(_history[-2].version)
 
 
+@app.post("/admin/deployments/{name}/restart")
+async def restart(name: str) -> Deployment:
+    """Like `kubectl rollout restart`: instances restart, version and revision stay the same."""
+    _require_known(name)
+    logger.warning("deployment restarted", extra={"version": _history[-1].version})
+    return _current()
+
+
+@app.post("/admin/deployments/{name}/scale")
+async def scale(name: str, request: ScaleRequest) -> Deployment:
+    """Records the replica count only; the demo always runs one process."""
+    global _replicas
+    _require_known(name)
+    _replicas = request.replicas
+    logger.warning("deployment scaled", extra={"replicas": _replicas})
+    return _current()
+
+
 def _roll_out(version: str) -> Deployment:
     _history.append(Revision(revision=_history[-1].revision + 1, version=version, deployed_at=datetime.now(UTC)))
     logger.warning("deployment rolled out", extra={"version": version, "revision": _history[-1].revision})
@@ -110,7 +133,9 @@ def _roll_out(version: str) -> Deployment:
 
 
 def _current() -> Deployment:
-    return Deployment(name=SERVICE_NAME, version=_history[-1].version, replicas=1, history=list(reversed(_history)))
+    return Deployment(
+        name=SERVICE_NAME, version=_history[-1].version, replicas=_replicas, history=list(reversed(_history))
+    )
 
 
 def _require_known(name: str) -> None:

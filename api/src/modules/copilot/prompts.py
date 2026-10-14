@@ -7,7 +7,7 @@ small enough for any model and makes the numbers the LLM cites easy to check aga
 from collections import Counter
 from datetime import UTC, datetime
 
-from src.core.config import MetricName
+from src.core.config import MetricName, app_config
 from src.modules.copilot.schemas import Evidence
 from src.modules.knowledge.schemas import SearchHit
 from src.modules.monitoring.schemas import MetricSeries
@@ -22,6 +22,10 @@ _UNTRUSTED = (
 
 CLASSIFY_SYSTEM = "You route questions sent to an operations copilot for our production services."
 
+_ACTION_CATALOG = "\n".join(
+    f"- {name} ({action.risk} risk): {action.description}" for name, action in app_config.remediation.actions.items()
+)
+
 DIAGNOSE_SYSTEM = f"""You are an operations copilot investigating a production service for an on-call engineer.
 
 Rules:
@@ -29,8 +33,14 @@ Rules:
 - Check deployments first: a release shortly before a metric changed is the most common cause.
 - Follow the runbooks for what is normal and what to do. Name the runbook you are following.
 - If evidence is missing or inconclusive, say so and lower your confidence; never invent data.
-- You cannot act. Recommend actions; rollbacks and restarts are high-risk and need approval from a superuser.
-- {_UNTRUSTED}"""
+- You cannot act directly, but you may propose ONE action from the catalog below as proposed_action. A human
+  approves it before anything happens. Propose one only when the evidence and the runbook clearly call for it;
+  otherwise leave proposed_action null. It always targets the service under investigation.
+- {_UNTRUSTED}
+
+Action catalog:
+{_ACTION_CATALOG}
+scale_deployment needs replicas between 1 and {app_config.remediation.max_replicas}."""
 
 KNOWLEDGE_SYSTEM = f"""You answer operations questions using only the runbooks and postmortems provided.
 

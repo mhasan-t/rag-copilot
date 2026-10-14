@@ -29,10 +29,10 @@ An API-first copilot, with a minimal React UI, that answers operational question
 | Embeddings           | Same approach via `init_embeddings` (`EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`)                                                                                                                                                                                                                                             | Same reason                                                                       |
 | Provider requirement | Chat model must support tool calling / structured output (used for classification and tool selection). Checked at startup                                                                                                                                                                                                 | Fail fast instead of mid-run                                                      |
 | Orchestration        | LangGraph `StateGraph` with `interrupt()` for approvals                                                                                                                                                                                                                                                                   | Built-in human-in-the-loop with resumable state                                   |
-| Graph persistence    | `langgraph-checkpoint-postgres` on the same Postgres; added in Phase 5, the first phase that pauses a run                                                                                                                                                                                                                                                                      | Runs survive restarts while awaiting approval                                     |
+| Graph persistence    | `langgraph-checkpoint-postgres` (psycopg pool) on the same Postgres. It manages its own `checkpoint*` tables, which Alembic ignores. Deserialization is limited to the graph state's own types                                                                                                                                                                                                                                                                      | Runs survive restarts while awaiting approval                                     |
 | Vector store         | `pgvector` column on `document_chunk`, SQLAlchemy                                                                                                                                                                                                                                                                         | Single DB                                                                         |
 | ORM / migrations     | SQLAlchemy 2 (async) + asyncpg + Alembic                                                                                                                                                                                                                                                                                  | One migration per table                                                           |
-| Redis                | Execution lock (approved action runs once). A monitoring-query cache was considered and deferred until a real need shows up | Nothing else needs it yet                                                         |
+| Redis                | Readiness check only so far. Exactly-once execution uses conditional status updates in Postgres instead of a lock (see section 6); a monitoring-query cache is deferred until a real need shows up | Keep or drop once the remaining phases are clear                                                         |
 | Monitoring stack     | Local **Grafana LGTM + Prometheus** via the single `grafana/otel-lgtm` image (Grafana, Loki, Tempo, Prometheus, OTel Collector)                                                                                                                                                                                           | User requirement; one container instead of five                                   |
 | Monitoring adapters  | Prometheus HTTP API (PromQL), Loki (LogQL), Tempo (TraceQL)                                                                                                                                                                                                                                                               | Real queries against the local stack                                              |
 | Something to monitor | A small **demo `payments` service** + load generator in compose, OTel-instrumented, with deployable "versions" (`v1` healthy, `v2` injects latency/errors)                                                                                                                                                                | Gives the copilot a real latency spike to diagnose and a real rollback to perform |
@@ -61,7 +61,7 @@ rag-copilot/
 │   ├── Dockerfile                  # venv at /opt/venv
 │   ├── pyproject.toml, uv.lock, alembic/
 │   ├── .env.local.example / .env.production.example
-│   ├── config/app.yaml             # service name, version, top_k, action/risk catalog, verification defaults
+│   ├── config/app.yaml             # service name, top_k, query templates, action/risk catalog, verification thresholds
 │   ├── seed/documents/*.md, seed/incidents.yaml
 │   ├── evals/datasets/*.yaml, evals/fixtures/, evals/run_evals.py
 │   ├── src/
@@ -101,9 +101,9 @@ Each module uses only the files it needs from:
 | `incident`             | id, service, severity, title, summary, status, started_at, resolved_at                                                  | Seeded in dev                                                                                      |
 | `copilot_run`          | id, user_id, question, classification, status (running/awaiting_approval/completed/failed/rejected), answer, created_at | One per question                                                                                   |
 | `run_step`             | id, run_id, node, tool_name, input, output, error, duration_ms, created_at (trace_id in Phase 6)                                 | Audit trail; secrets redacted                                                                      |
-| `remediation_proposal` | id, run_id, action_type, params_json, risk_level, rationale, status                                                     | proposed/approved/rejected/executed/failed/verified                                                |
-| `approval`             | id, proposal_id, approver_id, decision, comment, decided_at                                                             |                                                                                                    |
-| `action_execution`     | id, proposal_id, started_at, finished_at, result_json, verification_json                                                |                                                                                                    |
+| `remediation_proposal` | id, run_id (unique), service, action, params, risk_level, rationale, status                                                     | proposed → approved/rejected; approved → executing → verified/unverified/failed                                                |
+| `approval`             | id, proposal_id (unique), approver_id, decision, comment, decided_at                                                             | One decision per proposal                                                                                                    |
+| `action_execution`     | id, proposal_id (unique), started_at, finished_at, result, error, verification                                                | At most one execution per proposal                                                                                                    |
 
 UUIDs generated by Postgres (`gen_random_uuid()`). LangGraph checkpoint tables are managed by its own `setup()`.
 
@@ -127,7 +127,7 @@ classify ──► knowledge ──► retrieve_documents ──► answer_knowl
            ▼ approved                       ▼ rejected
          execute_action                    END
            ▼
-         verify_outcome   (re-query PromQL vs. runbook threshold after a settle delay)
+         verify_outcome   (poll PromQL until the configured thresholds hold, or time out)
            ▼
          END
 ```
@@ -136,10 +136,12 @@ classify ──► knowledge ──► retrieve_documents ──► answer_knowl
 - Summarising evidence and hypothesising a cause are one `diagnose` call: evidence is summarised deterministically in code first (downsampled series, grouped logs), so a separate LLM summarisation step adds latency without adding information.
 - An evidence source that fails (backend down, unknown service) is reported to the LLM as unavailable instead of failing the run.
 - One wrapper records every node as a `run_step` row; every tool query and LLM call (with its exact messages) gets its own row. OTel spans come in Phase 6.
-- Tools are typed (Pydantic input/output) and declared in `config/app.yaml` with `risk_level` (`read`, `low`, `high`). Executing `high` without an approved `approval` raises `ForbiddenError` in `RemediationService`. The graph is not the only gate.
+- Actions are declared in `config/app.yaml` with a `risk` (`low`, `high`); the LLM can only pick from them, with typed arguments, and risk always comes from the catalog. The target is always the investigated service, never an LLM choice. Executing anything not approved raises `ForbiddenError` in `RemediationService`: the graph is not the only gate.
 - PromQL/LogQL are built from templates per tool (e.g. `latency_p99(service, window)`), not free-form LLM queries. That keeps queries valid and bounded.
 - MVP actions: `rollback_deployment` (high), `restart_deployment` (high), `scale_deployment` (low).
-- Execution takes a Redis lock keyed by proposal id, so a double-clicked approval executes once.
+- Exactly-once: every status change is a single conditional `UPDATE … WHERE status = <expected>`, so of two simultaneous approvals one gets 409, and an approved action can only move to `executing` once. This replaced the planned Redis lock: Postgres is already the source of truth for the status, and nothing can disagree with it.
+- After an approval the action and its verification continue in a background task (approve returns 202). If the run fails after that point, its proposal is marked `failed` rather than left `executing`.
+- Verification thresholds live in config (`remediation.verification.thresholds`, matching the payments runbook) rather than being extracted from runbook text by the LLM: deterministic, and the LLM can't move the goalposts.
 
 ## 7. API surface (`/v1`)
 
@@ -156,7 +158,8 @@ classify ──► knowledge ──► retrieve_documents ──► answer_knowl
 | GET    | `/v1/copilot/runs/{id}`            | Status, answer, evidence, proposals                  |
 | GET    | `/v1/copilot/runs/{id}/steps`      | Audit trail                                          |
 | GET    | `/v1/remediations?status=proposed` | Pending approvals (for UI)                           |
-| POST   | `/v1/remediations/{id}/approve`    | Approve (policy-checked); resumes graph              |
+| GET    | `/v1/remediations/{id}`            | One proposal with its decision and execution         |
+| POST   | `/v1/remediations/{id}/approve`    | Approve (policy-checked); 202, resumes graph in the background |
 | POST   | `/v1/remediations/{id}/reject`     | Reject; resumes graph to END                         |
 | POST   | `/v1/knowledge/documents`          | Ingest a document                                    |
 | GET    | `/v1/knowledge/search?q=`          | Debug retrieval                                      |
@@ -242,9 +245,9 @@ Each phase ends runnable, with tests, lint and docs updated.
 
 **Phase 5 — Remediation + approval**
 
-- Action catalog; proposal/approval/execution tables; `interrupt()`/resume via Postgres checkpointer; approve/reject endpoints; Redis execution lock; verification node.
-- `ApprovalPolicy`, `RunPolicy`.
-- Tests: high-risk action cannot run without superuser approval; regular user can approve low-risk but not high-risk; superuser cannot approve their own high-risk run while another active superuser exists, but a sole active superuser can; approve → runs once → verified; reject → no execution.
+- Action catalog; proposal/approval/execution tables; `interrupt()`/resume via Postgres checkpointer; approve/reject endpoints; exactly-once via conditional status updates; verification node; demo service gains restart and scale.
+- `ApprovalPolicy` (`RunPolicy` came with Phase 4).
+- Tests: high-risk action cannot run without superuser approval; regular user can approve low-risk but not high-risk; superuser cannot approve their own high-risk run while another active superuser exists, but a sole active superuser can; approve → runs once → verified (live: v2 deployed, rollback approved, p99 and error ratio watched until they recover); reject → no execution; a paused run resumes after its in-memory state is dropped; a failure after approval fails the proposal instead of stranding it.
 
 **Phase 6 — Observability of the copilot**
 

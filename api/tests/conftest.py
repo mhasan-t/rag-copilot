@@ -1,6 +1,7 @@
 import asyncio
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
+from datetime import UTC, datetime
 
 import asyncpg
 import pytest
@@ -12,12 +13,25 @@ _dev_url = make_url(os.environ["DATABASE_URL"])
 _test_url = _dev_url.set(database=f"{_dev_url.database}_test")
 os.environ["DATABASE_URL"] = _test_url.render_as_string(hide_password=False)
 
+from src.core import background  # noqa: E402
 from src.core.config import settings  # noqa: E402
-from src.core.database import Base, engine  # noqa: E402
+from src.core.database import (  # noqa: E402
+    Base,
+    engine,
+    session_factory,  # noqa: E402
+)
 from src.core.http import http_client  # noqa: E402
 from src.main import app  # noqa: E402
 from src.modules.auth.cli import create_superuser  # noqa: E402
 from src.modules.auth.schemas import UserRead  # noqa: E402
+from src.modules.copilot.copilot_dependencies import get_chat_model, get_classifier_model  # noqa: E402
+from src.modules.incidents.incident_service import IncidentService  # noqa: E402
+from src.modules.incidents.seed import load_seed_incidents  # noqa: E402
+from src.modules.knowledge.knowledge_dependencies import get_embeddings  # noqa: E402
+from src.modules.knowledge.seed import seed_documents  # noqa: E402
+from tests.copilot_helpers import classify_as, diagnosis_from  # noqa: E402
+from tests.fake_chat_model import ScriptedChatModel  # noqa: E402
+from tests.fake_embeddings import WordHashEmbeddings  # noqa: E402
 from tests.helpers import PASSWORD, auth_headers  # noqa: E402
 
 
@@ -39,10 +53,14 @@ async def _test_database() -> None:
 
 
 @pytest.fixture(autouse=True)
-async def _empty_tables(_test_database: None) -> None:
+async def _empty_tables(_test_database: None) -> AsyncIterator[None]:
+    # Background work (resumed runs) from a previous test must not write into the next one.
+    await background.wait_for_all()
     tables = ", ".join(f'"{table.name}"' for table in Base.metadata.sorted_tables)
     async with engine.begin() as connection:
         await connection.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+    yield
+    await background.wait_for_all()
 
 
 @pytest.fixture
@@ -88,3 +106,27 @@ async def bad_release() -> AsyncIterator[None]:
     (await http_client.post(f"{deployment_url}/deploy", json={"version": "v2"})).raise_for_status()
     yield
     (await http_client.post(f"{deployment_url}/deploy", json={"version": previous_version})).raise_for_status()
+
+
+@pytest.fixture
+def llm() -> Iterator[ScriptedChatModel]:
+    """Scripted chat model (and fake embeddings) for copilot runs; tests replace handlers to change its answers."""
+    model = ScriptedChatModel(
+        handlers={
+            "Classification": classify_as("investigate"),
+            "Diagnosis": diagnosis_from,
+            "text": lambda _prompt: "Roll back via the deployment rollback runbook.",
+        }
+    )
+    app.dependency_overrides[get_chat_model] = lambda: model
+    app.dependency_overrides[get_classifier_model] = lambda: model
+    app.dependency_overrides[get_embeddings] = WordHashEmbeddings
+    yield model
+
+
+@pytest.fixture
+async def copilot_data() -> None:
+    """Seed runbooks and incidents, as `make seed` loads them."""
+    await seed_documents(WordHashEmbeddings())
+    async with session_factory() as session:
+        await IncidentService(session).seed(load_seed_incidents(datetime.now(UTC)))

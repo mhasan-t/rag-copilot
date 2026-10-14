@@ -2,16 +2,13 @@ import uuid
 from typing import Annotated
 
 from fastapi import Depends, Query
-from langchain_core.embeddings import Embeddings
-from langchain_core.language_models import BaseChatModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.dependencies import get_session
 from src.modules.auth.auth_dependencies import CurrentUser
-from src.modules.copilot.copilot_dependencies import get_chat_model, get_classifier_model
-from src.modules.copilot.run_service import RunService
+from src.modules.copilot.copilot_dependencies import get_copilot_models
+from src.modules.copilot.run_service import CopilotModels, RunService
 from src.modules.copilot.schemas import RunCreate, RunRead, RunStepRead
-from src.modules.knowledge.knowledge_dependencies import get_embeddings
 
 type Session = Annotated[AsyncSession, Depends(get_session)]
 
@@ -20,11 +17,9 @@ async def create_run(
     data: RunCreate,
     current_user: CurrentUser,
     session: Session,
-    chat_model: Annotated[BaseChatModel, Depends(get_chat_model)],
-    classifier_model: Annotated[BaseChatModel, Depends(get_classifier_model)],
-    embeddings: Annotated[Embeddings, Depends(get_embeddings)],
+    models: Annotated[CopilotModels, Depends(get_copilot_models)],
 ) -> RunRead:
-    return await RunService(session).ask(current_user, data.question, chat_model, classifier_model, embeddings)
+    return await RunService(session).ask(current_user, data.question, models)
 
 
 async def list_runs(

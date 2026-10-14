@@ -8,6 +8,7 @@ from src.core.config import MetricName
 from src.modules.deployments.schemas import DeploymentState
 from src.modules.incidents.schemas import IncidentRead
 from src.modules.monitoring.schemas import LogEntry, MetricSeries, TraceSummary
+from src.modules.remediation.schemas import ProposedAction, RemediationRead
 
 
 class RunCreate(BaseModel):
@@ -20,13 +21,14 @@ class RunRead(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     question: str
-    status: Literal["running", "completed", "failed"]
+    status: Literal["running", "awaiting_approval", "completed", "rejected", "failed"]
     classification: dict[str, Any] | None
     answer: str | None
     diagnosis: dict[str, Any] | None
     error: str | None
     created_at: datetime
     completed_at: datetime | None
+    remediation: RemediationRead | None = None
 
 
 class RunStepRead(BaseModel):
@@ -73,6 +75,10 @@ class Diagnosis(BaseModel):
     evidence: list[str] = Field(description="Specific observations from the evidence that support the cause")
     recommended_actions: list[str] = Field(
         description="What to do next, following the runbooks; say when an action needs approval"
+    )
+    proposed_action: ProposedAction | None = Field(
+        default=None,
+        description="One action from the catalog to carry out after human approval, or null if none is justified",
     )
 
 

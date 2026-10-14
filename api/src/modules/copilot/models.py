@@ -18,7 +18,9 @@ class CopilotRun(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("app_user.id"), comment="Who asked")
     question: Mapped[str] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(32), comment="running, completed or failed")
+    status: Mapped[str] = mapped_column(
+        String(32), comment="running, awaiting_approval, completed, rejected (proposal turned down) or failed"
+    )
     classification: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB, comment="Category, service and time window the classifier chose"
     )

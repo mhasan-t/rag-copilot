@@ -99,7 +99,8 @@ Tests use a fake embedder, so `make test` doesn't need a model server; `make see
 
 1. **classify** decides whether the question is an investigation of a service, a how-to question for the runbooks, or out of scope, and which service and time window it's about.
 2. For an investigation, **retrieve_runbooks** and **gather_evidence** run in parallel. Evidence comes from Prometheus (p99 latency, error ratio, request rate), Loki (error logs), Tempo (slow traces), the deployment backend and the incident history. A source that fails is passed on as "unavailable" rather than failing the run.
-3. **diagnose** asks the LLM for an answer, the likely cause, its confidence, supporting evidence and recommended actions. It only recommends; nothing is executed in this phase.
+3. **diagnose** asks the LLM for an answer, the likely cause, its confidence, supporting evidence, recommended actions and, optionally, **one proposed action** from the catalog.
+4. **propose_remediation** validates that action and stores it. The run then **pauses** with status `awaiting_approval` (see [Remediation and approval](#remediation-and-approval)).
 
 How-to questions go to **retrieve_documents** → **answer_knowledge** instead.
 
@@ -110,6 +111,44 @@ If the LLM can't be reached, the request fails with 502 and `details.run_id`; th
 The chat model comes from the `LLM_*` settings (see [Choosing a model provider](#choosing-a-model-provider)); it must support tool calling, which the API checks at startup. `LLM_CLASSIFIER_MODEL` can name a smaller model for the classify step. `copilot.llm_timeout_seconds` in `api/config/app.yaml` caps each LLM call.
 
 Tests use a scripted chat model, so they check routing, evidence and prompts but not how well a real model reasons. Try a real model by starting it (e.g. `ollama pull qwen3:8b`), running `make seed`, `make demo-deploy v2`, waiting a minute, and asking "Why is the payments service showing a latency spike?".
+
+## Remediation and approval
+
+The copilot can act, but never on its own say-so.
+
+**The catalog** (`remediation.actions` in `api/config/app.yaml`) lists everything it can do and how risky each action is:
+
+| Action | Risk | Effect |
+|---|---|---|
+| `rollback_deployment` | high | Re-deploy the previous version |
+| `restart_deployment` | high | Restart every instance |
+| `scale_deployment` | low | Set the replica count (1 to `max_replicas`) |
+
+The LLM can only pick from this list. Risk comes from the catalog, and the target is always the service being investigated. An invalid proposal (e.g. 50 replicas) is dropped and recorded in the run's steps.
+
+**Who may decide** (`ApprovalPolicy`):
+
+| | Low risk | High risk |
+|---|---|---|
+| Approve | any active user | a superuser, but not on a run they started, unless they are the only active superuser |
+| Reject | anyone who may approve, plus whoever started the run | same |
+
+**Endpoints:** `GET /v1/remediations?status=proposed` is the approval queue: superusers see everything, other users see their own runs' proposals plus everyone's low-risk ones. Then `POST /v1/remediations/{id}/approve` or `/reject`, with an optional `{"comment": "..."}`.
+
+**After approval** the API answers `202` right away. The paused run resumes in the background: **execute_action** carries out the action exactly once, then **verify_outcome** checks the service's metrics every `poll_seconds` until every threshold in `remediation.verification.thresholds` holds (p99 ≤ 0.3 s, error ratio ≤ 1%), or `timeout_seconds` passes. Poll `GET /v1/remediations/{id}` or the run for the outcome:
+
+| Proposal status | Meaning |
+|---|---|
+| `proposed` | Waiting for a decision |
+| `rejected` | Turned down; nothing was done; the run's status is `rejected` |
+| `executing` | Approved and being carried out or verified |
+| `verified` | Done, and the service recovered |
+| `unverified` | Done, but the metrics didn't recover in time: escalate |
+| `failed` | The action itself failed, or the run broke after approval (the reason is in `execution.error`) |
+
+Paused runs are saved by LangGraph's Postgres checkpointer, so they survive API restarts. The checkpointer creates its own `checkpoint*` tables; Alembic ignores them.
+
+Known limit: the action and its verification run as an in-process background task. A graceful shutdown waits for it to finish, but if the API process crashes during those minutes, that work stops. The run then stays `running` and the proposal stays `executing`, and you have to check the service yourself.
 
 ## Users and authentication
 

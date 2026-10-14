@@ -32,3 +32,25 @@ knowledge:
 copilot:
   # Upper bound for one LLM call; local models on CPU can be slow.
   llm_timeout_seconds: 120
+
+remediation:
+  # Everything the copilot can do. Risk comes from here, never from the LLM: "high" needs superuser approval.
+  actions:
+    rollback_deployment:
+      risk: high
+      description: Roll the service back to the version deployed before the current one.
+    restart_deployment:
+      risk: high
+      description: Restart every instance of the service, e.g. to release stuck database connections.
+    scale_deployment:
+      risk: low
+      description: Change how many replicas of the service run, e.g. to absorb more load.
+  max_replicas: 10
+  verification:
+    # After an action, the service counts as recovered when every metric here is at or below its threshold
+    # (the values in the payments runbook). Checked every poll_seconds until timeout_seconds.
+    thresholds:
+      latency_p99_seconds: 0.3
+      error_ratio: 0.01
+    timeout_seconds: 300
+    poll_seconds: 15

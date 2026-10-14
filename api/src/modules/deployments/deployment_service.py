@@ -15,3 +15,21 @@ class DeploymentService:
         state = await self._adapter.get_deployment(require_service_name(service))
         logger.info("deployment queried", extra={"service": service, "version": state.version})
         return state
+
+    # The actions below change production. Callers must have checked approval first (RemediationService does).
+
+    async def rollback(self, service: str) -> DeploymentState:
+        """Re-deploys the previous revision's version as a new revision; UpstreamError if there is none."""
+        state = await self._adapter.rollback(require_service_name(service))
+        logger.warning("deployment rolled back", extra={"service": service, "version": state.version})
+        return state
+
+    async def restart(self, service: str) -> DeploymentState:
+        state = await self._adapter.restart(require_service_name(service))
+        logger.warning("deployment restarted", extra={"service": service})
+        return state
+
+    async def scale(self, service: str, replicas: int) -> DeploymentState:
+        state = await self._adapter.scale(require_service_name(service), replicas)
+        logger.warning("deployment scaled", extra={"service": service, "replicas": replicas})
+        return state
