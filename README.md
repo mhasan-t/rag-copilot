@@ -5,4 +5,4 @@ An operations copilot that answers questions like "Why is the payments service s
 - [Development guide](docs/development.md)
 - [Implementation plan](docs/plan.md)
 
-Quick start: `make up`, then open http://localhost:8000/docs.
+Quick start: `make up`, `make createsuperuser you@example.com`, then open the UI at http://localhost:5173 (API docs at http://localhost:8000/docs).

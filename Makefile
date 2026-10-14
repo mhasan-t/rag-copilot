@@ -3,7 +3,7 @@ DEV_COMPOSE = docker compose --env-file .env -f docker-compose.dev.yaml
 # Everything after the first Make goal is treated as positional arguments.
 ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
-.PHONY: prepare-env compose up up-f down clean logs migrate revision test lint format createsuperuser eval eval-record seed demo-deploy demo-rollback psql redis-cli app_bash python
+.PHONY: prepare-env compose up up-f down clean logs migrate revision test lint format createsuperuser eval eval-record seed web-install web-types web-e2e demo-deploy demo-rollback psql redis-cli app_bash python
 
 # Create local configuration once while preserving every developer override.
 prepare-env:
@@ -39,11 +39,26 @@ revision:
 test:
 	$(DEV_COMPOSE) exec api pytest $(ARGS)
 
-lint:
+lint: web-install
 	cd api && uv run ruff check . && uv run ruff format --check .
+	cd web && npm run lint && npm run typecheck
 
-format:
+format: web-install
 	cd api && uv run ruff check --fix . && uv run ruff format .
+	cd web && npm run format
+
+# The web app's tooling (lint, types, browser tests) runs on the host; the dev server runs in its container.
+web-install:
+	@test -d web/node_modules || (cd web && npm ci)
+
+# Regenerate the UI's API types from the running API; commit the result with the API change.
+web-types:
+	cd web && npx --yes openapi-typescript@7.13.0 http://localhost:8000/openapi.json -o src/api/schema.d.ts
+
+# Browser tests against the running dev stack, in the installed Chrome. Adds tagged e2e users and runs to the dev
+# database, and briefly scales the demo payments service.
+web-e2e: web-install
+	cd web && npx playwright test $(ARGS)
 
 # Usage: make createsuperuser admin@example.com (prompts for the password).
 createsuperuser:

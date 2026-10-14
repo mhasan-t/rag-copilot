@@ -105,6 +105,20 @@ services:
       redis:
         condition: service_healthy
 
+  # React UI with hot reload; it calls /v1 on its own origin and Vite forwards that to the api.
+  web:
+    build: ./web
+    environment:
+      API_PROXY_TARGET: http://api:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web:/opt/web/app
+      # Hides a node_modules installed on the host (for lint and e2e), so the container uses its own in /opt.
+      - /opt/web/app/node_modules
+    depends_on:
+      - api
+
 volumes:
   postgres-data:
   lgtm-data:

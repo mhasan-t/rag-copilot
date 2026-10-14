@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Docker with Compose v2
-- [uv](https://docs.astral.sh/uv/) (only for linting/formatting on the host)
+- [uv](https://docs.astral.sh/uv/) and Node 24 (only for linting, formatting and browser tests on the host)
 - A model provider. The defaults in `api/.env.local.example` use [Ollama](https://ollama.com) on the host:
   `ollama pull qwen3:8b && ollama pull nomic-embed-text`. Any LangChain-supported provider works; see [Configuration](#configuration).
 
@@ -18,6 +18,7 @@ make clean     # stop and delete the database and telemetry volumes
 
 | Service | URL |
 |---|---|
+| Web UI | http://localhost:5173 |
 | API (OpenAPI docs at `/docs`) | http://localhost:8000 |
 | Grafana (Loki, Tempo, Prometheus datasources preconfigured; **Copilot** and **Demo payments service** dashboards) | http://localhost:3000 |
 | Demo payments service (admin API under `/admin/deployments/payments`) | http://localhost:8001 |
@@ -33,7 +34,9 @@ The `api` container bind-mounts `api/` and reloads on change. Its virtualenv liv
 | `make seed` | Load example incidents (skipped if the table has rows) and ingest `api/seed/documents/*.md` (unchanged files are skipped). Ingesting needs the embedding provider to be running |
 | `make demo-deploy v2` / `make demo-rollback` | Release the demo service's faulty `v2` / roll back to the previous version |
 | `make createsuperuser admin@example.com` | Create a superuser (prompts for the password) |
-| `make lint` / `make format` | Ruff check + format check / auto-fix + format, on the host |
+| `make lint` / `make format` | Ruff, oxlint, Prettier and the TypeScript check / their auto-fixes, on the host |
+| `make web-e2e` | Browser tests of the UI against the running stack (see [Web UI](#web-ui)) |
+| `make web-types` | Regenerate the UI's API types after changing the API |
 | `make revision m="add user table"` | Autogenerate an Alembic migration |
 | `make migrate` | Apply migrations |
 | `make psql`, `make redis-cli`, `make app_bash`, `make python` | Shells into the services |
@@ -198,6 +201,24 @@ It exits non-zero below the dataset's `min_pass_rate` (80%). A JSON report with 
 To re-record after changing the demo service or the queries: `make compose restart payments`, then `make eval-record` (~15 min; it deploys v2 for a few minutes and then v1 again).
 
 The harness is tested too (`make test`), with scripted models: one that answers exactly as the dataset expects must pass every case, and one that knows nothing must fail the right checks.
+
+## Web UI
+
+`web/` is a React app (Vite, TypeScript, Tailwind) served by the `web` container at http://localhost:5173, with hot reload. Sign in with any user. The first superuser comes from `make createsuperuser`.
+
+| Page | What it's for |
+|---|---|
+| Ask | Ask a question; you land on the run when it's done |
+| Run | The answer (rendered Markdown), the diagnosis, any proposed action with Approve/Reject, and every step the copilot took, expandable to its exact inputs and outputs |
+| Runs | History, newest first (superusers see everyone's) |
+| Approvals | Proposals waiting for a decision; the count also shows in the nav bar |
+| Users | Superusers only: add users, deactivate them, reset passwords |
+
+The UI calls the API on its own origin (`/v1/...`), and Vite forwards those requests to the `api` container, so no CORS is needed. Pages poll while something is in progress, such as a run or an approved action being verified.
+
+- **API types** in `web/src/api/schema.d.ts` are generated from the API's OpenAPI spec. After changing an endpoint or schema, run `make web-types` and commit the result. `make lint` then type-checks the UI against the new API.
+- **Design tokens** (colours for surfaces, text and statuses) are defined once in `web/src/index.css`. Components use the token names (`bg-surface`, `text-danger`, ...), never raw palette colours.
+- **Browser tests:** `make web-e2e` runs Playwright in your installed Chrome against the running stack. It first creates two users and four runs in the dev database with the scripted LLM, tagged with a random suffix. It then signs in, browses runs, is refused approval of its own high-risk action, rejects it, approves a low-risk scale from the queue and waits for it to be verified (this really scales the demo service, and the teardown puts it back), and adds a user. Test data stays in the dev database; `make clean` removes it.
 
 ## Users and authentication
 

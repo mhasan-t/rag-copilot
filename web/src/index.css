@@ -1,0 +1,37 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens. Components use these names (bg-surface, text-muted, bg-danger, ...) instead of raw palette colours,
+ * so the look can change here in one place.
+ */
+@theme {
+  --color-canvas: var(--color-slate-50);
+  --color-surface: var(--color-white);
+  --color-border: var(--color-slate-200);
+  --color-ink: var(--color-slate-900);
+  --color-muted: var(--color-slate-500);
+
+  --color-brand: var(--color-indigo-600);
+  --color-brand-hover: var(--color-indigo-700);
+
+  /* Status colours: a soft background and a readable foreground for each. */
+  --color-ok: var(--color-emerald-700);
+  --color-ok-soft: var(--color-emerald-50);
+  --color-warn: var(--color-amber-800);
+  --color-warn-soft: var(--color-amber-50);
+  --color-danger: var(--color-red-700);
+  --color-danger-soft: var(--color-red-50);
+  --color-info: var(--color-sky-800);
+  --color-info-soft: var(--color-sky-50);
+  --color-neutral: var(--color-slate-700);
+  --color-neutral-soft: var(--color-slate-100);
+
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-canvas text-ink antialiased;
+  }
+}
