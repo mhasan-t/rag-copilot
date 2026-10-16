@@ -2,12 +2,13 @@
 
 import json
 import logging
-from collections import Counter
 from typing import Any
 
 import pytest
 from httpx import AsyncClient
 from opentelemetry import trace
+from opentelemetry.sdk.metrics.export import NumberDataPoint
+from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import format_trace_id
 from pydantic import ValidationError
 
@@ -20,23 +21,37 @@ from tests.telemetry_capture import METRICS, SPANS
 pytestmark = pytest.mark.usefixtures("copilot_data")
 
 
-def _metric(name: str) -> Counter[frozenset[tuple[str, Any]]]:
+type Points = dict[frozenset[tuple[str, Any]], float]
+
+
+def _metric(name: str) -> Points:
     """Current value of each data point (counter sum or histogram count), keyed by its attributes."""
-    values: Counter[frozenset[tuple[str, Any]]] = Counter()
+    values: Points = {}
     data = METRICS.get_metrics_data()
     for resource_metrics in data.resource_metrics if data else []:
         for scope_metrics in resource_metrics.scope_metrics:
             for metric in scope_metrics.metrics:
                 if metric.name == name:
                     for point in metric.data.data_points:
-                        values[frozenset(point.attributes.items())] = getattr(point, "value", None) or point.count
+                        value = point.value if isinstance(point, NumberDataPoint) else point.count
+                        values[frozenset((point.attributes or {}).items())] = value
     return values
 
 
-def _increase(before: Counter, after: Counter, **attributes: Any) -> float:
+def _attributes(span: ReadableSpan) -> dict[str, Any]:
+    return dict(span.attributes or {})
+
+
+def _trace_id(span: ReadableSpan) -> str:
+    context = span.get_span_context()
+    assert context is not None
+    return format_trace_id(context.trace_id)
+
+
+def _increase(before: Points, after: Points, **attributes: Any) -> float:
     """How much the points matching `attributes` grew; metrics are cumulative across the whole test session."""
     wanted = set(attributes.items())
-    return sum(value - before[key] for key, value in after.items() if wanted <= key)
+    return sum(value - before.get(key, 0) for key, value in after.items() if wanted <= key)
 
 
 async def test_a_run_is_one_trace_shared_by_its_spans_and_its_audit_trail(
@@ -46,18 +61,19 @@ async def test_a_run_is_one_trace_shared_by_its_spans_and_its_audit_trail(
 
     run = (await ask(client, regular_headers)).json()
 
-    spans = [span for span in SPANS.get_finished_spans() if span.attributes.get("copilot.run_id") == run["id"]]
+    spans = [span for span in SPANS.get_finished_spans() if _attributes(span).get("copilot.run_id") == run["id"]]
     [root] = [span for span in spans if span.name == "copilot.run"]
-    trace_id = format_trace_id(root.context.trace_id)
-    assert {format_trace_id(span.context.trace_id) for span in spans} == {trace_id}
+    trace_id = _trace_id(root)
+    assert {_trace_id(span) for span in spans} == {trace_id}
     names = {span.name for span in spans}
     assert {"copilot.classify", "copilot.gather_evidence", "copilot.diagnose", "copilot.diagnose llm"} <= names
     assert "copilot.gather_evidence metric:latency_p99_seconds" in names
 
     # LLM spans carry token usage (GenAI semantic conventions).
     [diagnose_llm] = [span for span in spans if span.name == "copilot.diagnose llm"]
-    assert diagnose_llm.attributes["gen_ai.usage.input_tokens"] > 100
-    assert diagnose_llm.attributes["gen_ai.usage.output_tokens"] == 10
+    input_tokens = _attributes(diagnose_llm)["gen_ai.usage.input_tokens"]
+    assert isinstance(input_tokens, int) and input_tokens > 100
+    assert _attributes(diagnose_llm)["gen_ai.usage.output_tokens"] == 10
 
     # Every audit row points at the same trace, so a step can be opened in Tempo.
     steps = await run_steps(client, regular_headers, run["id"])
@@ -75,7 +91,7 @@ async def test_failed_steps_are_marked_on_their_span(
     [deployment] = [
         span
         for span in SPANS.get_finished_spans()
-        if span.name == "copilot.gather_evidence deployment" and span.attributes["copilot.run_id"] == run["id"]
+        if span.name == "copilot.gather_evidence deployment" and _attributes(span)["copilot.run_id"] == run["id"]
     ]
     assert deployment.status.status_code == trace.StatusCode.ERROR
     assert [event.name for event in deployment.events] == ["exception"]
@@ -124,6 +140,7 @@ def test_log_lines_carry_the_current_trace_id():
 
 def test_telemetry_needs_an_endpoint_only_when_enabled():
     with pytest.raises(ValidationError, match="OTEL_EXPORTER_OTLP_ENDPOINT is required"):
-        Settings(telemetry_traces_enabled=True, otel_exporter_otlp_endpoint=None)
+        Settings(telemetry_traces_enabled=True, otel_exporter_otlp_endpoint=None)  # pyright: ignore[reportCallIssue]
 
-    assert not Settings(telemetry_traces_enabled=False, otel_exporter_otlp_endpoint=None).telemetry_traces_enabled
+    settings = Settings(telemetry_traces_enabled=False, otel_exporter_otlp_endpoint=None)  # pyright: ignore[reportCallIssue]
+    assert not settings.telemetry_traces_enabled

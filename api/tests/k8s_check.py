@@ -20,8 +20,9 @@ async def main() -> None:
     state = await deployments.get_deployment(SERVICE)
     versions = [revision.version for revision in state.history]
     _check(state.version == "v2" and versions[:2] == ["v2", "v1"], f"sees the v2 release on top of v1: {versions}")
-    released_at = state.history[0].deployed_at
-    _check(released_at > state.history[1].deployed_at, f"release time is the newest: {released_at}")
+    released_at, previous_at = state.history[0].deployed_at, state.history[1].deployed_at
+    assert released_at and previous_at, f"both releases have a time: {state.history[:2]}"
+    _check(released_at > previous_at, f"release time is the newest: {released_at}")
 
     state = await deployments.rollback(SERVICE)
     _check(state.version == "v1", f"rollback restores v1: now {state.version}")

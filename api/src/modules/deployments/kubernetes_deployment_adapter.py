@@ -44,7 +44,8 @@ class KubernetesDeploymentAdapter:
         """What `kubectl rollout undo` does: put the previous revision's pod template back."""
         async with _apps_api() as apps:
             deployment, replica_sets = await self._read(apps, name)
-            template = apps.api_client.sanitize_for_serialization(previous_template(deployment, replica_sets))
+            # The client serializes models anywhere in the body, so the template model can go in as is.
+            template = previous_template(deployment, replica_sets)
             patch = [{"op": "replace", "path": "/spec/template", "value": template}]
             await _call(apps.patch_namespaced_deployment(name, self._namespace, patch))
         return await self.get_deployment(name)

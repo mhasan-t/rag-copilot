@@ -43,7 +43,8 @@ async def _handle_unexpected_error(request: Request, exc: Exception) -> JSONResp
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(AppError, _handle_app_error)
-    app.add_exception_handler(HTTPException, _handle_http_exception)
-    app.add_exception_handler(RequestValidationError, _handle_validation_error)
-    app.add_exception_handler(Exception, _handle_unexpected_error)
+    # The decorator form, because add_exception_handler is typed to accept only handlers of plain Exception.
+    app.exception_handler(AppError)(_handle_app_error)
+    app.exception_handler(HTTPException)(_handle_http_exception)
+    app.exception_handler(RequestValidationError)(_handle_validation_error)
+    app.exception_handler(Exception)(_handle_unexpected_error)

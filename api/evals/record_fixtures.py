@@ -39,7 +39,9 @@ async def main() -> None:
         deployment = await DeploymentService().get_deployment(SERVICE)
 
     # The healthy window must not contain a deployment, or it wouldn't be "healthy, nothing changed".
-    ready_at = deployment.history[0].deployed_at + timedelta(minutes=WINDOW_MINUTES + 1)
+    deployed_at = deployment.history[0].deployed_at
+    assert deployed_at, f"the current release has a time: {deployment.history[0]}"
+    ready_at = deployed_at + timedelta(minutes=WINDOW_MINUTES + 1)
     if (wait := (ready_at - datetime.now(UTC)).total_seconds()) > 0:
         print(f"Waiting {wait / 60:.1f} min for a deployment-free window...", flush=True)
         await asyncio.sleep(wait)

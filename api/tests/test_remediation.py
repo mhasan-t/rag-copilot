@@ -7,6 +7,7 @@ Tests that approve an action really execute it against the demo payments service
 import asyncio
 import uuid
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -85,7 +86,7 @@ def _user(superuser: bool, active: bool = True) -> UserRead:
         is_superuser=superuser,
         is_active=active,
         created_by_id=None,
-        created_at="2026-01-01T00:00:00Z",
+        created_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
 
 

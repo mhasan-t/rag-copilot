@@ -17,7 +17,7 @@ class RemediationQuery:
         # populate_existing: callers re-read after conditional updates made outside the identity map.
         return await self._session.get(RemediationProposal, proposal_id, populate_existing=True)
 
-    async def get_with_owner(self, proposal_id: uuid.UUID) -> Row[tuple[RemediationProposal, uuid.UUID]] | None:
+    async def get_with_owner(self, proposal_id: uuid.UUID) -> Row[RemediationProposal, uuid.UUID] | None:
         """The proposal and the id of the user whose run it belongs to."""
         statement = (
             select(RemediationProposal, CopilotRun.user_id)

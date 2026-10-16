@@ -15,8 +15,8 @@ later request, even after a restart.
 
 import re
 import uuid
-from collections.abc import Awaitable, Callable
-from typing import Any, Literal, TypedDict
+from collections.abc import Awaitable
+from typing import Any, Protocol, TypedDict
 
 from langchain_core.embeddings import Embeddings
 from langgraph.graph import END, START, StateGraph
@@ -38,10 +38,10 @@ from src.modules.remediation.schemas import Decision, RemediationRead
 
 MIN_WINDOW_MINUTES, MAX_WINDOW_MINUTES = 5, 24 * 60
 
-type Node = Callable[[CopilotState], Awaitable[dict[str, Any]]]
 
+class CopilotState(TypedDict):
+    """Starts with only the question; each node adds its keys, and reads only keys set by the nodes before it."""
 
-class CopilotState(TypedDict, total=False):
     question: str
     classification: Classification
     documents: list[SearchHit]
@@ -51,6 +51,11 @@ class CopilotState(TypedDict, total=False):
     remediation: RemediationRead
     rejected_proposal: str  # why the LLM's proposed action was invalid and dropped
     decision: Decision
+
+
+class Node(Protocol):
+    # LangGraph types nodes by a protocol whose parameter is named `state`; a plain Callable type does not match it.
+    def __call__(self, state: CopilotState) -> Awaitable[dict[str, Any]]: ...
 
 
 # Every model stored in the state; checkpoints refuse to deserialize any other class.
@@ -175,7 +180,7 @@ class CopilotGraph:
 
     @staticmethod
     def _fixed_answer(answer: str) -> Node:
-        async def node(_: CopilotState) -> dict[str, Any]:
+        async def node(state: CopilotState) -> dict[str, Any]:
             return {"answer": answer}
 
         return node
@@ -203,13 +208,13 @@ def _route_question(state: CopilotState) -> str | list[str]:
     return ["retrieve_runbooks", "gather_evidence"]
 
 
-def _route_after_proposal(state: CopilotState) -> Literal["await_approval", "__end__"]:
+def _route_after_proposal(state: CopilotState) -> str:
     return "await_approval" if "remediation" in state else END
 
 
-def _route_after_decision(state: CopilotState) -> Literal["execute_action", "__end__"]:
+def _route_after_decision(state: CopilotState) -> str:
     return "execute_action" if state["decision"] == "approved" else END
 
 
-def _route_after_execution(state: CopilotState) -> Literal["verify_outcome", "__end__"]:
+def _route_after_execution(state: CopilotState) -> str:
     return "verify_outcome" if state["remediation"].status == "executing" else END

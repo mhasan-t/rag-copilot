@@ -1,7 +1,7 @@
 import uuid
-from typing import Any
+from typing import Any, cast
 
-from sqlalchemy import update
+from sqlalchemy import CursorResult, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.remediation.models import ActionExecution, Approval, RemediationProposal
@@ -30,7 +30,8 @@ class RemediationRepository:
             .where(RemediationProposal.id == proposal_id, RemediationProposal.status == from_status)
             .values(status=to_status)
         )
-        return (await self._session.execute(statement)).rowcount == 1
+        # An UPDATE always yields a CursorResult; execute() is only typed to return the base Result.
+        return cast(CursorResult, await self._session.execute(statement)).rowcount == 1
 
     async def add_approval(self, **values: Any) -> None:
         self._session.add(Approval(**values))

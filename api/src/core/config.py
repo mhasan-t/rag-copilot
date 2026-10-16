@@ -156,5 +156,5 @@ def _load_app_config() -> AppConfig:
     return AppConfig(**data, version=pyproject["project"]["version"])
 
 
-settings = Settings()
+settings = Settings()  # pyright: ignore[reportCallIssue]  (fields are read from the environment)
 app_config = _load_app_config()

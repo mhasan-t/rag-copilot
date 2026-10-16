@@ -43,8 +43,8 @@ async def test_investigation_shows_the_llm_the_live_evidence_of_a_bad_release(
     assert '<document title="Payments latency spike"' in prompt
     assert "Payments latency spike after release" in prompt  # the seeded past incident
     assert QUESTION in prompt
-    p99_now = float(re.search(r"p99 latency: now ([\d.]+)s", prompt).group(1))
-    assert p99_now > 0.5
+    p99 = re.search(r"p99 latency: now ([\d.]+)s", prompt)
+    assert p99 and float(p99.group(1)) > 0.5
 
     steps = await run_steps(client, regular_headers, run["id"])
     assert not [step for step in steps if step["error"]]

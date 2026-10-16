@@ -4,7 +4,8 @@ from typing import Any, TypeAliasType, get_args
 
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
-from psycopg.rows import dict_row
+from psycopg import AsyncConnection
+from psycopg.rows import DictRow, dict_row
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel
 from sqlalchemy import make_url
@@ -12,7 +13,7 @@ from sqlalchemy import make_url
 from src.core.config import settings
 
 _lock = asyncio.Lock()
-_pool: AsyncConnectionPool | None = None
+_pool: AsyncConnectionPool[AsyncConnection[DictRow]] | None = None
 _saver: AsyncPostgresSaver | None = None
 
 
@@ -30,6 +31,7 @@ async def get_checkpointer(state_types: tuple[type, ...]) -> AsyncPostgresSaver:
             url = make_url(settings.database_url).set(drivername="postgresql").render_as_string(hide_password=False)
             pool = AsyncConnectionPool(
                 url,
+                connection_class=AsyncConnection[DictRow],
                 kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
                 max_size=5,
                 open=False,

@@ -19,7 +19,7 @@ class KnowledgeQuery:
 
     async def search(
         self, embedding: list[float], service: str | None, limit: int
-    ) -> Sequence[Row[tuple[DocumentChunk, Document, float]]]:
+    ) -> Sequence[Row[DocumentChunk, Document, float]]:
         """Nearest chunks by cosine distance, optionally limited to one service's documents plus untagged ones."""
         # Without this, HNSW filters *after* fetching its candidate list, so a service filter can return fewer
         # than `limit` rows even when more matches exist (pgvector >= 0.8). Scoped to this transaction.

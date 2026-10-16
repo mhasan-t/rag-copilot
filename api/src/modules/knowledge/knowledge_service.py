@@ -1,4 +1,5 @@
 import hashlib
+from typing import cast
 
 from langchain_core.embeddings import Embeddings
 from sqlalchemy.exc import IntegrityError
@@ -13,7 +14,7 @@ from src.modules.knowledge.chunking import chunk_markdown
 from src.modules.knowledge.knowledge_policy import KnowledgePolicy
 from src.modules.knowledge.knowledge_query import KnowledgeQuery
 from src.modules.knowledge.knowledge_repository import KnowledgeRepository
-from src.modules.knowledge.schemas import DocumentIngest, IngestResult, SearchHit
+from src.modules.knowledge.schemas import DocType, DocumentIngest, IngestResult, SearchHit
 
 EMBEDDING_MODEL_ID = f"{settings.embedding_provider}:{settings.embedding_model}"
 
@@ -87,7 +88,7 @@ class KnowledgeService:
                 document_id=document.id,
                 title=document.title,
                 source_uri=document.source_uri,
-                doc_type=document.doc_type,
+                doc_type=cast(DocType, document.doc_type),  # only DocType values are ever stored
                 chunk_index=chunk.chunk_index,
                 content=chunk.content,
                 score=1 - distance,

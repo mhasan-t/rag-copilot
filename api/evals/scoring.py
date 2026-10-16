@@ -72,11 +72,12 @@ def score(case: EvalCase, run: RunRead, steps: list[RunStepRead]) -> list[str]:
 
 
 def _check_action(expected: str, run: RunRead) -> list[str]:
-    proposed = run.remediation.action if run.remediation else "none"
+    proposal = run.remediation
+    proposed = proposal.action if proposal else "none"
     if proposed != expected:
         return [f"action: expected {expected}, got {proposed}"]
-    if expected != "none" and (run.status != "awaiting_approval" or run.remediation.status != "proposed"):
-        return [f"action should wait for approval; run is {run.status}, proposal is {run.remediation.status}"]
+    if proposal and (run.status != "awaiting_approval" or proposal.status != "proposed"):
+        return [f"action should wait for approval; run is {run.status}, proposal is {proposal.status}"]
     return []
 
 

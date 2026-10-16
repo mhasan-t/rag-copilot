@@ -132,7 +132,7 @@ async def test_embedding_provider_failure_keeps_the_stored_document():
     async with session_factory() as session:
         await KnowledgeService(session, WordHashEmbeddings()).ingest(DocumentIngest(**RUNBOOK))
     async with session_factory() as session:
-        changed = DocumentIngest(**RUNBOOK | {"content": "# Checkout errors\n\nNew text.\n"})
+        changed = DocumentIngest.model_validate(RUNBOOK | {"content": "# Checkout errors\n\nNew text.\n"})
         with pytest.raises(UpstreamError):
             await KnowledgeService(session, BrokenEmbeddings()).ingest(changed)
 

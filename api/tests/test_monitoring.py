@@ -87,4 +87,4 @@ async def test_backend_failures_become_upstream_errors():
         await PrometheusAdapter("http://lgtm:1").query_range("up", start, end, 15)
     with pytest.raises(UpstreamError, match="400") as error:
         await PrometheusAdapter(settings.prometheus_url).query_range("sum(", start, end, 15)
-    assert "parse error" in error.value.details["response"]
+    assert error.value.details and "parse error" in error.value.details["response"]
