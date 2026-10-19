@@ -3,7 +3,7 @@ DEV_COMPOSE = docker compose --env-file .env -f docker-compose.dev.yaml
 # Everything after the first Make goal is treated as positional arguments.
 ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
-.PHONY: k8s-tools k8s-up k8s-release k8s-verify k8s-ui k8s-down prepare-env compose up up-f down clean logs migrate revision test lint format createsuperuser eval eval-record seed web-install web-types web-e2e demo-deploy demo-rollback psql redis-cli app_bash python
+.PHONY: k8s-tools k8s-up k8s-release k8s-verify k8s-ui k8s-down prepare-env compose up up-f down clean logs metrics migrate revision test lint format createsuperuser eval eval-record seed web-install web-types web-e2e demo-deploy demo-rollback psql redis-cli app_bash python
 
 # Create local configuration once while preserving every developer override.
 prepare-env:
@@ -28,6 +28,10 @@ clean:
 
 logs:
 	$(DEV_COMPOSE) logs --follow $(ARGS)
+
+# The copilot's runs, step latency and LLM token use from Prometheus, redrawn every 5 s (Ctrl-C to stop).
+metrics:
+	$(DEV_COMPOSE) exec api python -m src.modules.copilot.metrics_cli
 
 migrate:
 	$(DEV_COMPOSE) run --rm migrate $(ARGS)

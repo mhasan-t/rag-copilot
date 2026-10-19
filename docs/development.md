@@ -29,6 +29,7 @@ The `api` container bind-mounts `api/` and reloads on change. Its virtualenv liv
 
 | Command | What it does |
 |---|---|
+| `make metrics` | The copilot's runs, step latency, step errors and LLM token use, redrawn every 5 s in the terminal (the Copilot Grafana dashboard's queries). Pair it with `make logs api` |
 | `make test` | Run pytest inside the api container. Tests use real Postgres and Redis, but a separate `<db>_test` database that is recreated from the migrations on every run, so dev data is never touched. Monitoring tests query the live stack and briefly deploy the demo service's `v2`, so the whole stack must be up; they take ~40 s |
 | `make eval` | Score the copilot against a real LLM (see [Evaluating the copilot](#evaluating-the-copilot)) |
 | `make seed` | Load example incidents (skipped if the table has rows) and ingest `api/seed/documents/*.md` (unchanged files are skipped). Ingesting needs the embedding provider to be running |
@@ -67,6 +68,18 @@ The chat model and embeddings are created through LangChain's `init_chat_model` 
 Bundled integrations: `openai` (also any OpenAI-compatible server such as vLLM or LM Studio), `anthropic`, `ollama`. Others: `uv add langchain-<provider>`.
 
 Embeddings are configured the same way with the `EMBEDDING_*` variables. `EMBEDDING_DIMENSIONS` must match the embedding model's output size; changing the embedding model later requires a migration and re-indexing.
+
+### Running on a local Ollama
+
+The defaults in `api/.env.local.example` already use Ollama on the host; set `LLM_MODEL` to any model from `ollama list`. Three things on the host decide whether it works:
+
+- **Containers must reach Ollama.** They connect to `host.docker.internal:11434`, but Ollama listens on `127.0.0.1` only by default. Make it listen on all interfaces with `sudo systemctl edit ollama`, adding `[Service]` and `Environment="OLLAMA_HOST=0.0.0.0:11434"`, then `sudo systemctl restart ollama`. This also exposes it to your network, so firewall port 11434 if that matters. Check with `make app_bash` then `curl host.docker.internal:11434/api/tags`.
+- **Enough context.** Many models default to a 4096-token context, and Ollama silently cuts longer prompts; a diagnose prompt with runbooks and evidence is about 3,000 tokens before the reply. Create a variant with more room and use its name as `LLM_MODEL`: `printf 'FROM <model>\nPARAMETER num_ctx 8192\n' > Modelfile && ollama create <model>-8k -f Modelfile`.
+- **Enough memory.** On CPU the model is loaded into RAM (a 7B Q4 model needs about 4.5 GiB, plus some for the larger context) on top of about 2 GiB for the dev stack. If Ollama replies "model requires more system memory", free some up (e.g. `make k8s-down`) or pick a smaller model.
+
+Structured output through Ollama uses its JSON-schema `format` rather than tool calls, so completion-only models (e.g. DeepSeek-R1 distills) work too. Small local models diagnose less reliably than hosted ones; `make eval model=<model>` measures how well.
+
+To watch a run from the terminal, keep three terminals open: `make logs api` (the API's JSON logs: run status changes, monitoring queries, requests and errors; `GET /v1/copilot/runs/{id}/steps` has the full detail), `make metrics` (runs, latencies, token use), and `journalctl -u ollama -f` (each model call and how long it took).
 
 ## Demo service and monitoring
 
