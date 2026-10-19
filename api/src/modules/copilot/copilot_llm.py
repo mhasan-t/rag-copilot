@@ -2,7 +2,7 @@ import asyncio
 from typing import Any
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage
 from opentelemetry import metrics, trace
 from pydantic import BaseModel
 
@@ -27,19 +27,19 @@ class CopilotLLM:
         self._steps = steps
 
     async def classify(self, question: str) -> Classification:
-        messages = [SystemMessage(prompts.CLASSIFY_SYSTEM), HumanMessage(question)]
+        messages = prompts.CLASSIFY_PROMPT.format_messages(question=question)
         return await self._structured("classify", self._classifier_model, Classification, messages)
 
     async def diagnose(self, question: str, documents: list[SearchHit], evidence: Evidence) -> Diagnosis:
-        context = f"{prompts.render_documents(documents)}\n\n{prompts.render_evidence(evidence)}"
-        messages = [SystemMessage(prompts.DIAGNOSE_SYSTEM), HumanMessage(f"{context}\n\nQuestion: {question}")]
+        messages = prompts.DIAGNOSE_PROMPT.format_messages(
+            documents=prompts.render_documents(documents), evidence=prompts.render_evidence(evidence), question=question
+        )
         return await self._structured("diagnose", self._chat_model, Diagnosis, messages)
 
     async def answer_from_documents(self, question: str, documents: list[SearchHit]) -> str:
-        messages = [
-            SystemMessage(prompts.KNOWLEDGE_SYSTEM),
-            HumanMessage(f"{prompts.render_documents(documents)}\n\nQuestion: {question}"),
-        ]
+        messages = prompts.KNOWLEDGE_PROMPT.format_messages(
+            documents=prompts.render_documents(documents), question=question
+        )
         async with self._steps.track("answer_knowledge", tool_name="llm", input=_loggable(messages)) as step:
             response = await self._call(self._chat_model.ainvoke(messages))
             _record_usage("answer_knowledge", self._chat_model, response)
